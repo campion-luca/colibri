@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-
-export type Tab = 'oggi' | 'cal' | 'liste';
+import type { Tab } from '../store/ui.ts';
 
 interface NavProps {
   active: Tab;

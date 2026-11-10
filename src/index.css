@@ -1,9 +1,10 @@
 @import 'tailwindcss';
+@import './styles/components.css';
 
 /* =========================================================
    Token del design — valori presi da colibri-bozza.html
    ========================================================= */
-@theme {
+@theme static {
   /* Solo la palette della bozza: niente colori di default di Tailwind. */
   --color-*: initial;
   --color-bg: #13110f;
@@ -55,6 +56,26 @@
       transform: translateX(100%);
     }
   }
+}
+
+/* Nomi brevi della bozza, usati dal CSS dei componenti. */
+:root {
+  --bg: var(--color-bg);
+  --s1: var(--color-s1);
+  --s2: var(--color-s2);
+  --line: var(--color-line);
+  --ivory: var(--color-ivory);
+  --muted: var(--color-muted);
+  --dim: var(--color-dim);
+  --amber: var(--color-amber);
+  --amber-d: var(--color-amber-d);
+  --red: var(--color-red);
+  --red-d: var(--color-red-d);
+  --green: var(--color-green);
+  --shadow: var(--color-shadow);
+  --mono: var(--font-mono);
+  --ease: var(--ease-soft);
+  --spring: var(--ease-spring);
 }
 
 /* =========================================================
