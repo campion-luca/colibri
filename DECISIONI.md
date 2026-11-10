@@ -7,6 +7,11 @@ Integrano `PROMPT-colibri.md`. In caso di conflitto vale questo file.
 1. **Promesse durante un'assenza.** Al rollover si penalizza ogni promessa non mantenuta la cui data cade nei giorni penalizzati (max 7, saltando quelli in pausa). Poi si tolgono comunque tutte le promesse con data passata, anche se più vecchie di 7 giorni.
 2. **Promessa + scadenza nello stesso giorno.** Una sola penalità, quella della promessa (1.5×), e si segna anche `due_penalized`.
 
+3. **"In sospeso" con scadenza non toglie XP.** Niente penalità e non conta negli XP a rischio. Il giorno della scadenza compare in Oggi con il tag SCADENZA ed entra nella notifica delle 9:00 senza il testo sugli XP persi ("Scade oggi: X (in sospeso)").
+4. **Ordine in Oggi.** Ricorrenti di oggi in due gruppi, da fare (attive e non ancora aperte) sopra, fatte e scadute sotto, poi l'ordine manuale. **"Non previste oggi" per prossima data**, come nella bozza, e senza grip.
+5. **Ogni azione crea un evento**, anche creare un'idea e "− TOGLI UNA" (evento `undone` con `meta.single`).
+6. **Penalità dopo un'assenza.** Negli eventi penalità `day` è il giorno a cui si riferisce la penalità; `ts` è il momento in cui è stata applicata. `day_history` ha una riga per l'ultimo giorno di apertura e per ogni altro giorno che riceve penalità, così il calendario mostra il rosso sul giorno giusto. Il report del mattino somma tutte le penalità del rollover e, se i giorni sono più di uno, mostra la data accanto a ogni voce.
+
 ## UX (CLAUDE.md vs prompt)
 
 - CSS base sempre: titoli bilanciati, numeri tabulari, tap target ≥ 44px, safe area.

@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     include: ['src/**/*.test.ts'],
-    passWithNoTests: true,
+    // fuso diverso da Roma: scopre i calcoli che dipendono per errore dall'ora locale
+    env: { TZ: 'America/Los_Angeles' },
   },
 });
