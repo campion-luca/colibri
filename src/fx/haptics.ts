@@ -22,6 +22,9 @@ function iosSwitch(): HTMLLabelElement {
   return label;
 }
 
+/** iOS (trucco dello switch): la vibrazione funziona solo dentro un gesto dell'utente. */
+export const hapticNeedsGesture = (): boolean => !('vibrate' in navigator);
+
 export function haptic(pattern: number | number[] = 10): void {
   if (!usePrefs.getState().haptics) return;
   try {

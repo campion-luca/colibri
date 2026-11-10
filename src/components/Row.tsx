@@ -21,7 +21,7 @@ import {
 } from '../domain/index.ts';
 import { nope, shake } from '../fx/effects.ts';
 import { SETTLE_DONE_MS, feelToggle } from '../fx/feel.ts';
-import { haptic } from '../fx/haptics.ts';
+import { haptic, hapticNeedsGesture } from '../fx/haptics.ts';
 import { settleAfter } from '../fx/order.ts';
 import { promise } from '../lib/actions.ts';
 import { startDrag } from '../lib/drag.ts';
@@ -198,6 +198,8 @@ function Check({ hold, part, pct, onToggle }: CheckProps) {
   const timer = useRef<number | null>(null);
   const buzz = useRef<number | null>(null);
   const justHeld = useRef(false);
+  /** completata a tempo: su iOS si ripete la vibrazione al rilascio (gesto utente) */
+  const heldDone = useRef(false);
   const [holding, setHolding] = useState(false);
 
   const stopBuzz = () => {
@@ -205,9 +207,12 @@ function Check({ hold, part, pct, onToggle }: CheckProps) {
     buzz.current = null;
   };
 
-  const toggleNow = () => {
+  const toggleNow = (): boolean => {
     const el = box.current;
-    if (el && !onToggle(el)) nope(el);
+    if (!el) return false;
+    if (onToggle(el)) return true;
+    nope(el);
+    return false;
   };
 
   const cancelHold = () => {
@@ -252,12 +257,27 @@ function Check({ hold, part, pct, onToggle }: CheckProps) {
           window.setTimeout(() => {
             justHeld.current = false;
           }, 600);
-          toggleNow();
+          // la vibrazione parte subito (feelToggle); su iOS può non arrivare perché
+          // scatta a tempo e non dentro un gesto: la si ripete al rilascio
+          heldDone.current = toggleNow();
         }, HOLD_MS);
       }}
-      onPointerUp={cancelHold}
-      onPointerCancel={cancelHold}
-      onPointerLeave={cancelHold}
+      onPointerUp={() => {
+        if (heldDone.current) {
+          heldDone.current = false;
+          if (hapticNeedsGesture()) haptic(14);
+          return;
+        }
+        cancelHold();
+      }}
+      onPointerCancel={() => {
+        heldDone.current = false;
+        cancelHold();
+      }}
+      onPointerLeave={() => {
+        heldDone.current = false;
+        cancelHold();
+      }}
       onClick={(e) => {
         if (justHeld.current) {
           justHeld.current = false;

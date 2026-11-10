@@ -35,6 +35,7 @@ Tempi, curve di easing e frequenze sono copiati dalla bozza. Cambiano solo quest
   - "?" degli stemmi segreti: pulsa con l'opacità invece che con il colore.
 - **Budget FX:** massimo 40 nodi contemporanei; oltre, le particelle decorative vengono saltate (timbro, colibrì, fiamma e "+XP" passano sempre).
 - **prefers-reduced-motion:** niente scosse (casella, header, schermo, campo vuoto), particelle (anche la scia del colibrì e i coriandoli), raggi e scintille rotanti, colibrì in volo. Restano pop, "+XP", timbri, scorrimento delle righe, suoni (anche il frullo d'ali) e logica. Tolta la regola CSS globale che azzerava tutte le animazioni.
+- **Vibrazione su "tieni premuto" (iOS).** Al completamento a tempo si prova a vibrare subito; su iOS il trucco dello switch funziona solo dentro un gesto dell'utente, quindi se c'è stato un completamento la vibrazione si ripete sul `pointerup` che segue. La ripetizione avviene solo dove manca `navigator.vibrate` (iOS), così su Android non vibra due volte.
 - **Suoni e Vibrazione** (unica aggiunta approvata): interruttori in Impostazioni, salvati sul dispositivo (localStorage `colibri-prefs`).
 - **Discesa di rank al rollover:** per ora l'overlay compare subito; in F5 arriverà dopo il report del mattino, come nella bozza.
 - **Banner di notifica interno all'app:** spostato in F6 insieme alle notifiche.
