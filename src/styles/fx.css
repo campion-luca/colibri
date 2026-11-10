@@ -1,0 +1,388 @@
+/*
+ * Effetti e animazioni portati da colibri-bozza.html. Le animazioni infinite e gli FX
+ * usano solo transform e opacity.
+ */
+@layer components {
+  /* ---------- fuoco / strike ---------- */
+  .fire {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 8px 4px 4px;
+    border: 1px solid var(--amber-d);
+    background: #2a1a10;
+  }
+  .fire svg {
+    width: 22px;
+    height: 28px;
+    overflow: visible;
+  }
+  .fire b {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--amber);
+  }
+  .fire.top {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+  .fire.sm {
+    padding: 1px 6px 1px 2px;
+    gap: 1px;
+    border-color: #5a3418;
+  }
+  .fire.sm svg {
+    width: 13px;
+    height: 17px;
+  }
+  .fire.sm b {
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+  .h-fire {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fl-o {
+    transform-origin: 50% 100%;
+    animation: flick 0.42s ease-in-out infinite alternate;
+  }
+  .fl-i {
+    transform-origin: 50% 100%;
+    animation: flick2 0.3s ease-in-out infinite alternate;
+  }
+  [data-heat='2'] .fl-o {
+    animation-duration: 0.3s;
+  }
+  [data-heat='2'] {
+    filter: saturate(1.3) hue-rotate(-12deg);
+  }
+  [data-heat='3'] {
+    filter: hue-rotate(185deg) saturate(1.4) brightness(1.1);
+  }
+  [data-heat='3'] .fl-o {
+    animation-duration: 0.22s;
+  }
+  .fireburst {
+    position: fixed;
+    z-index: 72;
+    pointer-events: none;
+    text-align: center;
+    transform: translate(-50%, -50%);
+  }
+  .fireburst svg {
+    width: 64px;
+    height: 84px;
+    overflow: visible;
+    display: block;
+    margin: 0 auto;
+  }
+  .fireburst b {
+    display: block;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: var(--bg);
+    background: var(--amber);
+    padding: 2px 6px;
+    margin-top: 4px;
+  }
+
+  /* ---------- +XP e particelle ---------- */
+  .float {
+    position: fixed;
+    z-index: 70;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--amber);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .float.neg {
+    color: var(--red);
+  }
+  .float em {
+    display: block;
+    font-style: normal;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ivory);
+    background: var(--amber-d);
+    padding: 1px 4px;
+    margin-top: 2px;
+    text-align: center;
+  }
+  .spark {
+    position: fixed;
+    z-index: 69;
+    width: 6px;
+    height: 6px;
+    background: var(--amber);
+    pointer-events: none;
+  }
+
+  /* ---------- celebrazioni ---------- */
+  .stamp {
+    position: fixed;
+    left: 50%;
+    top: 40%;
+    z-index: 76;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: max-content;
+    max-width: 92vw;
+  }
+  .stamp-in {
+    border: 4px solid var(--amber);
+    color: var(--amber);
+    padding: 14px 22px 12px;
+    font-weight: 700;
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background: rgba(19, 17, 15, 0.9);
+    box-shadow:
+      0 0 0 3px var(--bg),
+      0 0 60px rgba(242, 163, 58, 0.45);
+  }
+  .stamp-in small {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--ivory);
+    margin-top: 8px;
+  }
+  .stamp.big .stamp-in {
+    font-size: 38px;
+    background: var(--amber);
+    color: var(--bg);
+    border-color: var(--ivory);
+  }
+  .stamp.big .stamp-in small {
+    color: var(--bg);
+  }
+  .shock {
+    position: fixed;
+    z-index: 75;
+    pointer-events: none;
+    left: 50%;
+    top: 40%;
+    width: 60px;
+    height: 60px;
+  }
+  .shock svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .flash {
+    position: fixed;
+    inset: 0;
+    z-index: 74;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 40%, rgba(242, 163, 58, 0.35), transparent 65%);
+  }
+  .flyer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 77;
+    pointer-events: none;
+    width: 72px;
+    height: 72px;
+  }
+  .flyer svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 10px rgba(242, 163, 58, 0.7));
+  }
+  .flyer svg path:nth-of-type(3) {
+    transform-box: fill-box;
+    transform-origin: 0% 100%;
+    animation: flap 0.07s linear infinite alternate;
+  }
+  /* bagliore dell'onda sulle righe: al posto di animare background e bordo */
+  .wave-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: rgba(242, 163, 58, 0.16);
+    box-shadow: inset 0 0 0 1px var(--amber);
+    opacity: 0;
+  }
+
+  /* ---------- stemmi animati ---------- */
+  .emb-wrap {
+    position: relative;
+  }
+  .emb-wrap > .emb {
+    width: 100%;
+    height: 100%;
+  }
+  .emb-glow {
+    position: absolute;
+    inset: 0;
+    box-shadow: 0 0 42px rgba(255, 195, 90, 0.75);
+    animation: glow 2.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .emb.r4::after,
+  .emb.r5::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background: linear-gradient(
+      115deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.45) 50%,
+      transparent 60%
+    );
+    transform: translateX(-120%);
+    animation: sweep 3.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .emb.r5::after {
+    animation-duration: 2.8s;
+  }
+  .emb .rays {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    animation: spin 16s linear infinite;
+  }
+  .emb .orbit {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    animation: spin 4.5s linear infinite;
+  }
+  .emb.mystery .q {
+    animation: qpulse 2.4s ease-in-out infinite;
+  }
+
+  /* ---------- overlay ---------- */
+  .ovl {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    background: rgba(12, 10, 9, 0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    padding: 24px;
+    overflow: auto;
+  }
+  .ovl.on {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .ovl-c {
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.5s var(--spring);
+  }
+  .ovl.on .ovl-c {
+    transform: none;
+  }
+  .ovl h1 {
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+  .ovl .k {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .ovl .emb-wrap {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 22px;
+  }
+  .ovl .emb-wrap.down {
+    filter: grayscale(0.6) brightness(0.8);
+  }
+  .ovl .btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+
+@keyframes flick {
+  0% {
+    transform: scale(1, 1) skewX(-3deg);
+  }
+  100% {
+    transform: scale(0.94, 1.1) skewX(3deg);
+  }
+}
+@keyframes flick2 {
+  0% {
+    transform: scale(1, 0.9) translateX(-0.5px);
+  }
+  100% {
+    transform: scale(0.9, 1.12) translateX(0.5px);
+  }
+}
+@keyframes flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(-0.5);
+  }
+}
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes sweep {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  85%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes qpulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* prefers-reduced-motion: niente raggi rotanti né scintille in orbita (shake, particelle
+   e colibrì in volo sono saltati in fx/effects.ts). Suoni e logica restano uguali. */
+@media (prefers-reduced-motion: reduce) {
+  .emb .rays,
+  .emb .orbit {
+    animation: none;
+  }
+}

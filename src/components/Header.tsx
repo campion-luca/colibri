@@ -1,9 +1,14 @@
-import { RANKS, type RankProgress } from '../domain/index.ts';
+import { useEffect, useRef, useState } from 'react';
+import { RANKS, STRIKE_FROM, type RankProgress } from '../domain/index.ts';
+import { SPRING, eachEased } from '../fx/core.ts';
+import { shake } from '../fx/effects.ts';
 import { Emblem } from './Emblem.tsx';
+import { Fire } from './Fire.tsx';
 
 export interface HeaderProps {
   progress: RankProgress;
   xp: number;
+  strike: number;
   /** es. "3h 12m" */
   midnightIn: string;
   /** XP a rischio a mezzanotte (0 = tutto al sicuro) */
@@ -13,11 +18,63 @@ export interface HeaderProps {
   onOpenSettings: () => void;
 }
 
-export function Header({ progress, xp, midnightIn, risk, paused, onOpenSettings }: HeaderProps) {
+/** Contatore che corre al nuovo valore (700 ms, ease-out cubica come nella bozza). */
+function useTweened(value: number, dur = 700): number {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const start = from.current;
+    if (start === value) return;
+    const t0 = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, (t - t0) / dur);
+      const v = Math.round(start + (value - start) * (1 - Math.pow(1 - p, 3)));
+      from.current = v;
+      setShown(v);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+    };
+  }, [value, dur]);
+  return shown;
+}
+
+const GAIN: Keyframe[] = eachEased(
+  [
+    { transform: 'scale(1)' },
+    { transform: 'scale(1.12) rotate(-4deg)', offset: 0.4 },
+    { transform: 'scale(1)' },
+  ],
+  SPRING,
+);
+
+export function Header({
+  progress,
+  xp,
+  strike,
+  midnightIn,
+  risk,
+  paused,
+  onOpenSettings,
+}: HeaderProps) {
   const { index, rank, next, pct, toNext } = progress;
+  const shownXp = useTweened(xp);
+  const box = useRef<HTMLElement>(null);
+  const emblem = useRef<HTMLSpanElement>(null);
+  const lastXp = useRef(xp);
+
+  // scossa quando perdi XP, scatto dello stemma quando guadagni
+  useEffect(() => {
+    if (xp < lastXp.current) shake(box.current, 450);
+    else if (xp > lastXp.current) emblem.current?.animate(GAIN, { duration: 600 });
+    lastXp.current = xp;
+  }, [xp]);
 
   return (
-    <header className="relative border border-line bg-s1">
+    <header ref={box} className="relative border border-line bg-s1">
       <button
         type="button"
         onClick={onOpenSettings}
@@ -26,6 +83,7 @@ export function Header({ progress, xp, midnightIn, risk, paused, onOpenSettings 
       >
         <span className="flex flex-col items-center text-center">
           <Emblem
+            ref={emblem}
             rank={index}
             className={`mb-4 size-[104px] animate-bob ${paused ? 'brightness-75 grayscale-[.85]' : ''}`}
           />
@@ -34,7 +92,7 @@ export function Header({ progress, xp, midnightIn, risk, paused, onOpenSettings 
           </span>
           <b className="block text-[28px] font-bold tracking-[-.01em]">{rank.n}</b>
           <span className="mt-1 block font-mono text-[15px] text-muted">
-            <span className="text-lg text-ivory num">{xp}</span> XP
+            <span className="text-lg text-ivory num">{shownXp}</span> XP
           </span>
         </span>
 
@@ -70,6 +128,7 @@ export function Header({ progress, xp, midnightIn, risk, paused, onOpenSettings 
             )}
           </span>
         )}
+        {strike >= STRIKE_FROM && <Fire n={strike} size="top" />}
       </button>
     </header>
   );

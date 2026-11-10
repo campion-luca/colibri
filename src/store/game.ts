@@ -95,6 +95,10 @@ interface GameActions {
 }
 
 const LOCAL_USER = 'local';
+
+/** Vero durante `replaceAll` (dati di esempio / azzeramento): niente overlay di rank. */
+let quiet = false;
+export const isQuietUpdate = (): boolean => quiet;
 const EVENTS_KEEP_DAYS = 120;
 const TRASH_KEEP_MS = 30 * 86_400_000;
 
@@ -332,7 +336,9 @@ export const useGame = create<GameData & GameActions>()(
       },
 
       replaceAll(data) {
+        quiet = true;
         set({ ...emptyData(), ...data });
+        quiet = false;
       },
     }),
     {

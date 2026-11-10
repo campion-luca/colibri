@@ -21,6 +21,24 @@ Integrano `PROMPT-colibri.md`. In caso di conflitto vale questo file.
 - **Niente** ⌘K, scorciatoie da tastiera, BlurHash, sonner, shadcn. Toast personalizzati come nella bozza.
 - `squircle` e `@view-transition` del CSS base non si applicano: angoli vivi ovunque e app SPA.
 
+## F3 · Feel: differenze dalla bozza
+
+Tempi, curve di easing e frequenze sono copiati dalla bozza. Cambiano solo questi punti:
+
+- **Niente libreria `motion`.** Tutte le animazioni usano Web Animations API e CSS, come nella bozza, con gli stessi tempi e curve; lo scorrimento delle righe è un FLIP fatto a mano (420 ms, `cubic-bezier(.2,.8,.2,1)`). Risparmia una dipendenza senza perdere niente.
+- **Pausa prima del riordino.** Al tocco l'ordine delle sezioni resta congelato e la riga cambia aspetto dov'è; dopo 560 ms (350 se annulli, 450 per OGGI/DOM) scorre al suo posto. Le righe sono memoizzate: durante l'animazione si ridisegna solo quella toccata.
+- **Solo transform/opacity negli FX.** Per questo:
+  - eliminazione: la riga esce scivolando (190 ms) e le altre salgono con il FLIP, invece di animare l'altezza;
+  - onde d'urto dei timbri: quadrati SVG con bordo fisso di 3 px, invece di animare `border-width`;
+  - bagliore dello stemma Colibrì: uno strato che pulsa con l'opacità, invece di animare `box-shadow`;
+  - onda sulle righe: un velo ambra che compare e scompare, invece di animare sfondo e bordo;
+  - "?" degli stemmi segreti: pulsa con l'opacità invece che con il colore.
+- **Budget FX:** massimo 40 nodi contemporanei; oltre, le particelle decorative vengono saltate (timbro, colibrì, fiamma e "+XP" passano sempre).
+- **prefers-reduced-motion:** niente scosse (casella, header, schermo, campo vuoto), particelle (anche la scia del colibrì e i coriandoli), raggi e scintille rotanti, colibrì in volo. Restano pop, "+XP", timbri, scorrimento delle righe, suoni (anche il frullo d'ali) e logica. Tolta la regola CSS globale che azzerava tutte le animazioni.
+- **Suoni e Vibrazione** (unica aggiunta approvata): interruttori in Impostazioni, salvati sul dispositivo (localStorage `colibri-prefs`).
+- **Discesa di rank al rollover:** per ora l'overlay compare subito; in F5 arriverà dopo il report del mattino, come nella bozza.
+- **Banner di notifica interno all'app:** spostato in F6 insieme alle notifiche.
+
 ## Stato e sincronizzazione
 
 - Solo **Zustand** (niente TanStack Query).

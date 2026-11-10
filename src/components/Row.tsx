@@ -1,4 +1,5 @@
-import { Fragment, useRef, type ReactNode } from 'react';
+import { Fragment, memo, useEffect, useRef, useState, type ReactNode } from 'react';
+import { thud, tone } from '../audio/engine.ts';
 import {
   EFFORT,
   HOLD_MS,
@@ -18,6 +19,10 @@ import {
   type Item,
   type Now,
 } from '../domain/index.ts';
+import { nope, shake } from '../fx/effects.ts';
+import { SETTLE_DONE_MS, feelToggle } from '../fx/feel.ts';
+import { haptic } from '../fx/haptics.ts';
+import { settleAfter } from '../fx/order.ts';
 import { promise } from '../lib/actions.ts';
 import { startDrag } from '../lib/drag.ts';
 import { getNow } from '../lib/now.ts';
@@ -50,7 +55,7 @@ const EffBars = ({ e }: { e: number }) => (
   </span>
 );
 
-export function Row({ item: it, k, now, onReorder, ...opts }: RowProps) {
+function RowView({ item: it, k, now, onReorder, ...opts }: RowProps) {
   const today = now.day;
   const daily = it.kind === 'daily';
   const state = daily ? dailyState(it, now) : isDone(it, today) ? 'done' : 'active';
@@ -110,12 +115,16 @@ export function Row({ item: it, k, now, onReorder, ...opts }: RowProps) {
   if (it.kind === 'buy' && opts.showKind) meta.push(<span className="tag">DA COMPRARE</span>);
   if (it.kind === 'hold') meta.push(<span className="tag parked">IN SOSPESO</span>);
 
-  const onToggle = (): boolean => {
+  const onToggle = (chk: HTMLElement): boolean => {
+    // la riga cambia aspetto dov'è; scorre al suo posto dopo la pausa
+    settleAfter(SETTLE_DONE_MS);
     const r = useGame.getState().toggle(it.id, getNow());
-    if (r && !r.ok) {
+    if (!r) return true;
+    if (!r.ok) {
       toast(r.reason);
       return false;
     }
+    feelToggle(r, chk);
     return true;
   };
 
@@ -155,8 +164,8 @@ export function Row({ item: it, k, now, onReorder, ...opts }: RowProps) {
                 type="button"
                 className={`oggi ${on ? 'on' : ''}`}
                 aria-pressed={on}
-                onClick={() => {
-                  promise(it.id, when);
+                onClick={(e) => {
+                  promise(it.id, when, e.currentTarget);
                 }}
               >
                 {when === 0 ? 'OGGI' : 'DOM'}
@@ -170,6 +179,9 @@ export function Row({ item: it, k, now, onReorder, ...opts }: RowProps) {
   );
 }
 
+/** Ridisegna solo la riga che cambia: le altre restano ferme durante le animazioni. */
+export const Row = memo(RowView);
+
 /* ---------- casella ---------- */
 
 interface CheckProps {
@@ -178,30 +190,43 @@ interface CheckProps {
   part: boolean;
   pct: number;
   /** false = tocco rifiutato (la casella fa "no") */
-  onToggle: () => boolean;
+  onToggle: (chk: HTMLElement) => boolean;
 }
 
 function Check({ hold, part, pct, onToggle }: CheckProps) {
   const box = useRef<HTMLSpanElement>(null);
   const timer = useRef<number | null>(null);
+  const buzz = useRef<number | null>(null);
   const justHeld = useRef(false);
+  const [holding, setHolding] = useState(false);
 
-  const nope = () => {
+  const stopBuzz = () => {
+    if (buzz.current !== null) window.clearInterval(buzz.current);
+    buzz.current = null;
+  };
+
+  const toggleNow = () => {
     const el = box.current;
-    if (!el) return;
-    el.classList.remove('nope');
-    el.getBoundingClientRect(); // riflusso: riparte l'animazione
-    el.classList.add('nope');
+    if (el && !onToggle(el)) nope(el);
   };
 
   const cancelHold = () => {
     if (timer.current === null) return;
     window.clearTimeout(timer.current);
     timer.current = null;
-    box.current?.classList.remove('holding');
-    nope();
+    stopBuzz();
+    setHolding(false);
+    shake(box.current);
     toast('Tieni premuto per completare');
   };
+
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      stopBuzz();
+    },
+    [],
+  );
 
   return (
     <button
@@ -211,12 +236,23 @@ function Check({ hold, part, pct, onToggle }: CheckProps) {
       onPointerDown={(e) => {
         if (!hold) return;
         e.preventDefault();
-        box.current?.classList.add('holding');
+        setHolding(true);
+        haptic(6);
+        // ronzio che sale mentre il bordo si riempie
+        let k = 0;
+        buzz.current = window.setInterval(() => {
+          k++;
+          tone(200 + k * 40, 0.04, 'square', 0.07, 0, 1600);
+        }, 110);
         timer.current = window.setTimeout(() => {
           timer.current = null;
-          box.current?.classList.remove('holding');
+          stopBuzz();
+          setHolding(false);
           justHeld.current = true;
-          if (!onToggle()) nope();
+          window.setTimeout(() => {
+            justHeld.current = false;
+          }, 600);
+          toggleNow();
         }, HOLD_MS);
       }}
       onPointerUp={cancelHold}
@@ -229,12 +265,12 @@ function Check({ hold, part, pct, onToggle }: CheckProps) {
         }
         // con il dito si tiene premuto; da tastiera (detail = 0) basta Invio
         if (hold && e.detail !== 0) return;
-        if (!onToggle()) nope();
+        toggleNow();
       }}
     >
       <span
         ref={box}
-        className={`chk ${hold ? 'hold' : ''} ${part ? 'part' : ''}`}
+        className={`chk ${hold ? 'hold' : ''} ${part ? 'part' : ''} ${holding ? 'holding' : ''}`}
         style={{ '--p': `${pct}%` } as React.CSSProperties}
       >
         <svg className="tick" viewBox="0 0 24 24" aria-hidden="true">
@@ -263,7 +299,25 @@ export function Grip({ onReorder }: { onReorder: (from: number, to: number) => v
       aria-label="Tieni premuto e trascina"
       onPointerDown={(e) => {
         e.preventDefault();
-        startDrag(e.currentTarget, e.clientY, { onDrop: onReorder });
+        startDrag(e.currentTarget, e.clientY, {
+          onLift: () => {
+            haptic(18);
+            tone(262, 0.06, 'square', 0.09, 0, 1400);
+            tone(392, 0.06, 'square', 0.07, 0.04, 1600);
+          },
+          onMove: (target) => {
+            tone(300 + target * 30, 0.03, 'square', 0.05, 0, 1800);
+            haptic(5);
+          },
+          onDrop: (from, to) => {
+            onReorder(from, to);
+            thud();
+            haptic(14);
+          },
+          onCancel: () => {
+            tone(262, 0.05, 'square', 0.06, 0, 1400);
+          },
+        });
       }}
     >
       <i />

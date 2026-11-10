@@ -141,9 +141,6 @@
   .chk.holding {
     transform: scale(0.9);
   }
-  .chk.nope {
-    animation: hit 0.3s;
-  }
   .chk .hold-ico {
     position: absolute;
     bottom: -2px;
@@ -549,6 +546,13 @@
     z-index: 41;
     outline: none;
   }
+  .sheet[data-vaul-drawer] {
+    animation-duration: 0.38s;
+    animation-timing-function: var(--ease);
+  }
+  .scrim[data-vaul-overlay] {
+    animation-duration: 0.25s;
+  }
   .sheet-in {
     max-width: 480px;
     margin: 0 auto;
@@ -836,11 +840,17 @@
     gap: 10px;
   }
   .rk-cell {
+    display: block;
     text-align: center;
     padding: 10px 4px 8px;
     border: 1px solid var(--line);
+    cursor: pointer;
+    transition: transform 0.15s var(--spring);
   }
-  .rk-cell .emb {
+  .rk-cell:active {
+    transform: scale(0.95);
+  }
+  .rk-cell .emb-wrap {
     width: 58px;
     height: 58px;
     margin: 0 auto 8px;
@@ -932,20 +942,6 @@
   }
 }
 
-@keyframes hit {
-  20% {
-    transform: translateX(-6px);
-  }
-  40% {
-    transform: translateX(5px);
-  }
-  60% {
-    transform: translateX(-3px);
-  }
-  80% {
-    transform: translateX(2px);
-  }
-}
 @keyframes tbar {
   to {
     width: 0;

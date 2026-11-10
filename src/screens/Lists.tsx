@@ -1,11 +1,14 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import { SFX } from '../audio/engine.ts';
 import { Grip } from '../components/Row.tsx';
 import { RowGroup } from '../components/RowGroup.tsx';
 import { ddmm, listItems, sortedIdeas, type Idea } from '../domain/index.ts';
-import { softDelete } from '../lib/actions.ts';
+import { haptic } from '../fx/haptics.ts';
+import { flip } from '../fx/order.ts';
+import { ideaToTask, softDelete } from '../lib/actions.ts';
 import { getNow, useNow } from '../lib/now.ts';
 import { useGame } from '../store/game.ts';
-import { toast, useUi, type ListSeg } from '../store/ui.ts';
+import { useUi, type ListSeg } from '../store/ui.ts';
 
 const LISTS: [ListSeg, string][] = [
   ['todo', 'Task'],
@@ -89,11 +92,16 @@ function Ideas() {
   const input = useRef<HTMLTextAreaElement>(null);
 
   const add = () => {
-    if (!useGame.getState().addIdea(text, getNow())) {
+    if (!text.trim()) {
       input.current?.focus();
       return;
     }
-    setText('');
+    flip(() => {
+      useGame.getState().addIdea(text, getNow());
+      setText('');
+    });
+    SFX.commit();
+    haptic(10);
   };
   const ids = ideas.map((d) => d.id);
   const onReorder = (from: number, to: number) => {
@@ -166,8 +174,7 @@ function IdeaCard({
             type="button"
             className="mini"
             onClick={() => {
-              useGame.getState().ideaToTask(idea.id, getNow());
-              toast('Spostata in Task');
+              ideaToTask(idea.id);
             }}
           >
             → TASK

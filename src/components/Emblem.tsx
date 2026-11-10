@@ -44,24 +44,31 @@ const EMB = [
    <g class="orbit"><rect x="48" y="6" width="4" height="4" fill="#fff1c9"/><rect x="49" y="90" width="3" height="3" fill="${AM}"/></g>`,
 ];
 
-const MYSTERY = `<rect x="2" y="2" width="96" height="96" fill="#1c1916" stroke="#332d27" stroke-width="3" stroke-dasharray="8 6"/><text x="50" y="68" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="52" fill="#5d564d">?</text>`;
+const MYSTERY = `<rect x="2" y="2" width="96" height="96" fill="#1c1916" stroke="#332d27" stroke-width="3" stroke-dasharray="8 6"/><text x="50" y="68" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="52" fill="#8d8579" class="q">?</text>`;
 
 interface EmblemProps {
   rank: number;
   /** rank non ancora raggiunto: "?" tratteggiato */
   locked?: boolean;
+  /** dimensioni, margini e animazioni del contenitore */
   className?: string;
+  ref?: React.Ref<HTMLSpanElement>;
 }
 
-export function Emblem({ rank, locked = false, className = '' }: EmblemProps) {
+/**
+ * Stemma. Il contenitore porta dimensioni e animazioni (bob, scatto); per il Colibrì
+ * c'è uno strato di bagliore che pulsa con l'opacità.
+ */
+export function Emblem({ rank, locked = false, className = '', ref }: EmblemProps) {
   const svg = locked ? MYSTERY : (EMB[rank] ?? EMB[0] ?? '');
+  const cls = locked ? 'mystery' : `r${rank}`;
   return (
-    <span
-      className={`emb block ${locked ? 'mystery' : `r${rank}`} ${className}`}
-      aria-hidden="true"
-    >
-      {/* markup costante, nessun dato dell'utente */}
-      <svg viewBox="0 0 100 100" dangerouslySetInnerHTML={{ __html: svg }} />
+    <span ref={ref} className={`emb-wrap block ${cls} ${className}`} aria-hidden="true">
+      {!locked && rank === 5 && <span className="emb-glow" />}
+      <span className={`emb block ${cls}`}>
+        {/* markup costante, nessun dato dell'utente */}
+        <svg viewBox="0 0 100 100" dangerouslySetInnerHTML={{ __html: svg }} />
+      </span>
     </span>
   );
 }

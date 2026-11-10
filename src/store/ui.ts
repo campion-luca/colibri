@@ -10,6 +10,12 @@ export type Sheet =
   | { type: 'editIdea'; id: string }
   | { type: 'settings' };
 
+export type Overlay =
+  | { id: number; type: 'rank'; rank: number; up: boolean }
+  | { id: number; type: 'preview'; rank: number };
+
+type OverlayInput = Overlay extends infer O ? (O extends Overlay ? Omit<O, 'id'> : never) : never;
+
 interface ActionToast {
   id: number;
   msg: string;
@@ -31,6 +37,10 @@ interface UiState {
   /** `on: false` = in uscita (il testo resta durante l'animazione) */
   toast: { id: number; msg: string; on: boolean } | null;
   actionToast: (ActionToast & { on: boolean }) | null;
+  /** ordine delle sezioni congelato durante la pausa dopo un tocco (vedi fx/order) */
+  frozen: Record<string, string[]> | null;
+  overlay: Overlay | null;
+  overlayOpen: boolean;
 
   setTab: (tab: Tab) => void;
   setListSeg: (seg: ListSeg) => void;
@@ -43,6 +53,8 @@ interface UiState {
   hideToast: (id: number) => void;
   showActionToast: (t: Omit<ActionToast, 'id'>) => void;
   hideActionToast: (id: number) => void;
+  openOverlay: (o: OverlayInput) => void;
+  closeOverlay: () => void;
 }
 
 let seq = 0;
@@ -57,6 +69,9 @@ export const useUi = create<UiState>()((set) => ({
   sheetOpen: false,
   toast: null,
   actionToast: null,
+  frozen: null,
+  overlay: null,
+  overlayOpen: false,
 
   setTab: (tab) => {
     set({ tab });
@@ -87,6 +102,16 @@ export const useUi = create<UiState>()((set) => ({
   },
   showActionToast: (t) => {
     set({ actionToast: { ...t, id: ++seq, on: true } });
+  },
+  openOverlay: (o) => {
+    set({ overlay: { ...o, id: ++seq }, overlayOpen: true });
+  },
+  closeOverlay: () => {
+    set({ overlayOpen: false });
+    // resta montato il tempo della dissolvenza
+    window.setTimeout(() => {
+      if (!useUi.getState().overlayOpen) set({ overlay: null });
+    }, 300);
   },
   hideActionToast: (id) => {
     set((s) => (s.actionToast?.id === id ? { actionToast: { ...s.actionToast, on: false } } : s));

@@ -1,4 +1,5 @@
 import { flushSync } from 'react-dom';
+import { reducedMotion } from '../fx/core.ts';
 
 /*
  * Trascina per riordinare (dalla bozza). Si lavora direttamente sul DOM durante il
@@ -42,6 +43,7 @@ export function startDrag(grip: HTMLElement, clientY: number, handlers: DragHand
     (c): c is HTMLElement => c instanceof HTMLElement && c.dataset.k === k,
   );
   if (sibs.length < 2) {
+    if (reducedMotion()) return;
     el.animate(
       [{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'none' }],
       { duration: 220 },

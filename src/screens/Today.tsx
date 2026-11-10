@@ -1,14 +1,20 @@
+import { SFX } from '../audio/engine.ts';
+import { Fire } from '../components/Fire.tsx';
 import { RowGroup } from '../components/RowGroup.tsx';
 import {
+  STRIKE_FROM,
   fmtDay,
   isDone,
+  strikeCount,
   offToday,
   pauseOn,
   todayDailies,
   todayList,
   tomorrowList,
 } from '../domain/index.ts';
-import { getNow, useNow } from '../lib/now.ts';
+import { flip } from '../fx/order.ts';
+import { resumePause } from '../lib/actions.ts';
+import { useNow } from '../lib/now.ts';
 import { useGame } from '../store/game.ts';
 import { useUi } from '../store/ui.ts';
 
@@ -18,7 +24,14 @@ export function Today() {
   const pauses = useGame((s) => s.pauses);
   const showOff = useUi((s) => s.showOff);
   const showTom = useUi((s) => s.showTom);
-  const { toggleOff, toggleTom } = useUi.getState();
+  const toggleOff = () => {
+    SFX.commit();
+    flip(useUi.getState().toggleOff);
+  };
+  const toggleTom = () => {
+    SFX.commit();
+    flip(useUi.getState().toggleTom);
+  };
 
   const t = now.day;
   const dailies = todayDailies(items, now);
@@ -28,6 +41,7 @@ export function Today() {
   const pz = pauseOn(pauses, t);
   const dd = dailies.filter((i) => isDone(i, t)).length;
   const pd = prom.filter((i) => isDone(i, t)).length;
+  const sk = strikeCount(items, t);
 
   return (
     <>
@@ -39,13 +53,7 @@ export function Today() {
             {pz.untilDay ? `fino a ${fmtDay(t, pz.untilDay)} compreso` : 'finché non la togli'}. Se
             completi qualcosa prendi comunque gli XP.
           </span>
-          <button
-            type="button"
-            className="mini"
-            onClick={() => {
-              useGame.getState().resume(getNow());
-            }}
-          >
+          <button type="button" className="mini" onClick={resumePause}>
             RIPRENDI ORA
           </button>
         </div>
@@ -75,7 +83,10 @@ export function Today() {
 
       <section className="sec">
         <div className="sec-h">
-          <h2>Promesse e scadenze</h2>
+          <h2 className="h-fire">
+            Promesse e scadenze
+            {sk >= STRIKE_FROM && <Fire n={sk} size="sm" />}
+          </h2>
           <span className="num">
             {pd}/{prom.length}
           </span>

@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './styles/components.css';
+@import './styles/fx.css';
 
 /* =========================================================
    Token del design — valori presi da colibri-bozza.html
@@ -117,16 +118,6 @@
   }
   p {
     text-wrap: pretty;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    ::before,
-    ::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
   }
 }
 

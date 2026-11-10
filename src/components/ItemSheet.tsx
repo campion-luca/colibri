@@ -19,6 +19,9 @@ import {
   type RecurType,
   type Times,
 } from '../domain/index.ts';
+import { SFX, tone } from '../audio/engine.ts';
+import { nudge } from '../fx/effects.ts';
+import { haptic } from '../fx/haptics.ts';
 import { softDelete } from '../lib/actions.ts';
 import { getNow, useNow } from '../lib/now.ts';
 import { useGame } from '../store/game.ts';
@@ -86,16 +89,12 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
     const g = useGame.getState();
     const ui = useUi.getState();
     if (!draft.title.trim()) {
-      title.current?.animate(
-        [
-          { transform: 'translateX(-6px)' },
-          { transform: 'translateX(6px)' },
-          { transform: 'none' },
-        ],
-        { duration: 250 },
-      );
+      nudge(title.current);
+      SFX.loss();
       return;
     }
+    SFX.commit();
+    haptic(12);
     if (sheet.type === 'edit') {
       if (g.edit(sheet.id, draft, at)) toast('Salvato');
       ui.closeSheet();
@@ -186,6 +185,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 on={draft.effort === e}
                 onClick={() => {
                   set({ effort: e });
+                  tone(262 + e * 65, 0.08, 'square', 0.09, 0, 1800);
                 }}
               >
                 {EFFORT[e].n}
@@ -208,6 +208,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 on={draft.recur.type === v}
                 onClick={() => {
                   setRecur({ type: v });
+                  SFX.commit();
                 }}
               >
                 {l}
@@ -229,6 +230,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                           ? draft.recur.days.filter((x) => x !== d)
                           : [...draft.recur.days, d],
                       });
+                      tone(300 + d * 40, 0.06, 'square', 0.08, 0, 1800);
                     }}
                   >
                     {DOW_LBL[d].slice(0, 1)}
@@ -242,7 +244,9 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
               <Chip
                 label="Meno"
                 onClick={() => {
-                  setRecur({ every: stepEvery(draft.recur.every, -1) });
+                  const every = stepEvery(draft.recur.every, -1);
+                  setRecur({ every });
+                  tone(260 + every * 6, 0.05, 'square', 0.08, 0, 1800);
                 }}
               >
                 −
@@ -253,7 +257,9 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
               <Chip
                 label="Più"
                 onClick={() => {
-                  setRecur({ every: stepEvery(draft.recur.every, 1) });
+                  const every = stepEvery(draft.recur.every, 1);
+                  setRecur({ every });
+                  tone(260 + every * 6, 0.05, 'square', 0.08, 0, 1800);
                 }}
               >
                 +
@@ -265,7 +271,9 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
               <Chip
                 label="Meno"
                 onClick={() => {
-                  setRecur({ day: stepMonthDay(draft.recur.day, -1) });
+                  const day = stepMonthDay(draft.recur.day, -1);
+                  setRecur({ day });
+                  tone(260 + day * 8, 0.05, 'square', 0.08, 0, 1800);
                 }}
               >
                 −
@@ -276,7 +284,9 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
               <Chip
                 label="Più"
                 onClick={() => {
-                  setRecur({ day: stepMonthDay(draft.recur.day, 1) });
+                  const day = stepMonthDay(draft.recur.day, 1);
+                  setRecur({ day });
+                  tone(260 + day * 8, 0.05, 'square', 0.08, 0, 1800);
                 }}
               >
                 +
@@ -292,6 +302,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 on={draft.times === n}
                 onClick={() => {
                   set({ times: n });
+                  tone(262 + n * 80, 0.08, 'square', 0.09, 0, 1800);
                 }}
               >
                 {n}×
@@ -305,6 +316,8 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
             aria-checked={draft.allDay}
             onClick={() => {
               set({ allDay: !draft.allDay });
+              if (draft.allDay) SFX.commit();
+              else SFX.undo();
             }}
           >
             <span>
@@ -344,6 +357,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 className="mini"
                 onClick={() => {
                   useGame.getState().removeOneRep(sheet.id, getNow());
+                  SFX.undo();
                 }}
               >
                 − TOGLI UNA
@@ -374,6 +388,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 on={draft.promise === v}
                 onClick={() => {
                   set({ promise: v });
+                  SFX.commit();
                 }}
               >
                 {l}
@@ -408,6 +423,7 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 on={n === null ? !draft.due : draft.due === addDays(today, n)}
                 onClick={() => {
                   set({ due: n === null ? null : addDays(today, n) });
+                  SFX.commit();
                 }}
               >
                 {l}

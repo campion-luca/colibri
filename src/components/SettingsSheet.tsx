@@ -10,33 +10,70 @@ import {
   rankIndex,
   type Effort,
 } from '../domain/index.ts';
+import { SFX } from '../audio/engine.ts';
 import { seedData } from '../dev/seed.ts';
+import { haptic } from '../fx/haptics.ts';
 import { getNow } from '../lib/now.ts';
 import { useGame } from '../store/game.ts';
+import { usePrefs } from '../store/prefs.ts';
 import { toast, useUi } from '../store/ui.ts';
 import { Emblem } from './Emblem.tsx';
 
 const EFFORTS: Effort[] = [1, 2, 3, 4];
 
 /*
- * Impostazioni. In F2: stemmi, tabella XP e regole.
+ * Impostazioni: stemmi, suoni e vibrazione, tabella XP, regole.
  * Report di ieri e Pausa arrivano in F5, Notifiche in F6.
  */
 export function SettingsSheet() {
   const r = rankIndex(useGame((s) => s.xp));
+  const sound = usePrefs((s) => s.sound);
+  const haptics = usePrefs((s) => s.haptics);
 
   return (
     <>
       <h3>Rank · gli stemmi si svelano salendo</h3>
       <div className="rk-list">
         {RANKS.map((k, i) => (
-          <div key={k.n} className={`rk-cell ${i === r ? 'cur' : ''} ${i > r ? 'lock' : ''}`}>
+          <button
+            key={k.n}
+            type="button"
+            className={`rk-cell ${i === r ? 'cur' : ''} ${i > r ? 'lock' : ''}`}
+            onClick={() => {
+              useUi.getState().closeSheet();
+              SFX.commit();
+              useUi.getState().openOverlay({ type: 'preview', rank: i });
+            }}
+          >
             <Emblem rank={i} locked={i > r} />
             <b>{k.n}</b>
             <small className="num">{k.min} XP</small>
-          </div>
+          </button>
         ))}
       </div>
+
+      <h3>Suoni e vibrazione</h3>
+      <Toggle
+        label="Suoni"
+        hint="Spunte, combo, celebrazioni"
+        on={sound}
+        onChange={(on) => {
+          usePrefs.getState().setSound(on);
+          if (on) SFX.commit();
+        }}
+      />
+      <Toggle
+        label="Vibrazione"
+        hint="Android, e iPhone con iOS 18 o successivo"
+        on={haptics}
+        onChange={(on) => {
+          usePrefs.getState().setHaptics(on);
+          if (on) {
+            haptic(20);
+            SFX.commit();
+          } else SFX.undo();
+        }}
+      />
 
       <h3>XP per impegno</h3>
       <table className="tbl">
@@ -73,6 +110,36 @@ export function SettingsSheet() {
 
       {import.meta.env.DEV && <DevTools />}
     </>
+  );
+}
+
+function Toggle({
+  label,
+  hint,
+  on,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  on: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="tgl"
+      role="switch"
+      aria-checked={on}
+      onClick={() => {
+        onChange(!on);
+      }}
+    >
+      <span>
+        {label}
+        <small>{hint}</small>
+      </span>
+      <span className={`sw ${on ? 'on' : ''}`} />
+    </button>
   );
 }
 
