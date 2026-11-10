@@ -1,0 +1,6 @@
+dist
+dev-dist
+coverage
+package-lock.json
+colibri-bozza.html
+PROMPT-colibri.md

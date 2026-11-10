@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+
+/* =========================================================
+   Token del design — valori presi da colibri-bozza.html
+   ========================================================= */
+@theme {
+  /* Solo la palette della bozza: niente colori di default di Tailwind. */
+  --color-*: initial;
+  --color-bg: #13110f;
+  --color-s1: #1c1916;
+  --color-s2: #25211d;
+  --color-line: #332d27;
+  --color-ivory: #efe9dc;
+  --color-muted: #8d8579;
+  --color-dim: #5d564d;
+  --color-amber: #f2a33a;
+  --color-amber-d: #a8661a;
+  --color-red: #e0533d;
+  --color-red-d: #8f2e20;
+  --color-green: #9bc27a;
+  --color-shadow: #0b0a09;
+
+  --font-*: initial;
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Angoli vivi ovunque: nessuna utility rounded-* disponibile. */
+  --radius-*: initial;
+
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.3, 1.6, 0.5, 1);
+
+  /* Ombra "fisica" dei bottoni principali e versione schiacciata. */
+  --shadow-press: 0 4px 0 var(--color-amber-d);
+  --shadow-pressed: 0 1px 0 var(--color-amber-d);
+
+  --animate-bob: bob 3.2s ease-in-out infinite;
+  --animate-shine: shine 2.8s infinite;
+
+  @keyframes bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%);
+    }
+    60%,
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+@layer base {
+  html,
+  body {
+    height: 100%;
+    background: var(--color-bg);
+    color: var(--color-ivory);
+    font-family: var(--font-sans);
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #root {
+    min-height: 100%;
+  }
+  input,
+  textarea,
+  select {
+    border-radius: 0;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  button {
+    cursor: pointer;
+  }
+
+  /* 17 — titoli bilanciati */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* 16 — numeri tabulari per XP, timer, contatori */
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 13 — area tap >= 44px senza cambiare la grafica */
+@utility hit-slop {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+}
