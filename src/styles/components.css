@@ -983,20 +983,8 @@
     font-weight: 700;
     letter-spacing: -0.02em;
   }
-  .login-c .field.code {
-    text-align: center;
-    font-family: var(--mono);
-    font-size: 28px;
-    letter-spacing: 0.4em;
-  }
   .login-c .btn:disabled {
     opacity: 0.6;
-  }
-  .login-alt {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 4px;
   }
   .login-err {
     min-height: 1.2em;

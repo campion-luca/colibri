@@ -16,7 +16,7 @@ Senza variabili Supabase l'app gira **in locale** (dati nel browser, pulsanti di
 
 ## Supabase
 
-1. Progetto ospitato in EU (Francoforte). Auth: provider Email con **OTP a 6 cifre**; template "Magic Link" e "Confirm signup" con `{{ .Token }}` al posto di `{{ .ConfirmationURL }}`.
+1. Progetto ospitato in EU (Francoforte). Auth: provider Email con **email e password**. L'account si crea dalla dashboard (_Authentication → Users → Add user_, con "Auto Confirm User"); le iscrizioni restano chiuse.
 2. `.env.local` nella cartella del progetto (è in `.gitignore`):
 
    ```sh
@@ -35,7 +35,7 @@ Senza variabili Supabase l'app gira **in locale** (dati nel browser, pulsanti di
    npm run db:types     # rigenera src/data/database.types.ts
    ```
 
-4. Dopo aver creato il proprio account (primo accesso nell'app), disattivare le iscrizioni: _Authentication → Sign In / Providers → Allow new users to sign up_.
+4. Iscrizioni disattivate: _Authentication → Sign In / Providers → Allow new users to sign up_ spento.
 
 ## Script
 

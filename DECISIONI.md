@@ -43,7 +43,7 @@ Tempi, curve di easing e frequenze sono copiati dalla bozza. Cambiano solo quest
 ## F4 · Supabase
 
 - **Progetto ospitato** in EU (Francoforte), niente Docker: migrazioni in `supabase/migrations`, pubblicate con `npm run db:push` (Supabase CLI collegata con `supabase link`).
-- **Login con codice OTP a 6 cifre** via email (`signInWithOtp` + `verifyOtp` con `type: 'email'`), non con il link magico: su iPhone il link si aprirebbe in Safari e non nella PWA installata. Template "Magic Link" e "Confirm signup" con `{{ .Token }}`. Sessione salvata e rinnovata da sola (`persistSession`, `autoRefreshToken`, chiave `colibri-auth`).
+- **Login con email e password** (`signInWithPassword`). Il codice OTP via email è stato provato e scartato: richiedeva di modificare i template email di Supabase. Il link magico resta escluso perché su iPhone si aprirebbe in Safari e non nella PWA installata; la password non ha questo problema. L'account si crea dalla dashboard (_Authentication → Users → Add user_, "Auto Confirm User") e le iscrizioni restano chiuse. Sessione salvata e rinnovata da sola (`persistSession`, `autoRefreshToken`, chiave `colibri-auth`): il login si fa una volta per dispositivo.
 - **Chiavi nuove di Supabase:** `VITE_SUPABASE_PUBLISHABLE_KEY` (al posto di `VITE_SUPABASE_ANON_KEY`, dismessa entro fine 2026). La `SUPABASE_SECRET_KEY` serve solo ai test RLS e sta solo in `.env.local`.
 - **Modalità locale:** senza variabili Supabase l'app funziona come in F2/F3, solo in locale (sviluppo e prove automatiche). I pulsanti di sviluppo (dati di esempio, azzera) esistono solo lì e non toccano mai i dati veri.
 - **Schema** come nella sezione 7 del prompt, con queste differenze:

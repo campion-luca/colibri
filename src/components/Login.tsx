@@ -5,72 +5,56 @@ import { nudge } from '../fx/effects.ts';
 import { Emblem } from './Emblem.tsx';
 
 /*
- * Accesso con codice OTP a 6 cifre via email (niente link magico: su iPhone il link
- * si aprirebbe in Safari e non nella PWA installata, che ha uno spazio dati separato).
+ * Accesso con email e password (account creato dalla dashboard Supabase, iscrizioni
+ * chiuse). Niente link da aprire: funziona anche nella PWA installata su iPhone.
+ * Dopo il primo accesso la sessione resta salvata e si rinnova da sola.
  */
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function sendError(e: { status?: number; code?: string; message: string }): string {
-  if (e.status === 429 || e.code === 'over_email_send_rate_limit') {
-    return 'Troppi invii: riprova tra qualche minuto.';
+function loginError(e: { status?: number; code?: string; message: string }): string {
+  if (e.code === 'invalid_credentials' || /invalid login credentials/i.test(e.message)) {
+    return 'Email o password non corrette.';
   }
-  if (e.code === 'signup_disabled' || /signups? not allowed/i.test(e.message)) {
-    return 'Questa email non è abilitata.';
-  }
-  return 'Invio non riuscito. Controlla la connessione e riprova.';
+  if (e.code === 'email_not_confirmed') return 'Questo account non è ancora confermato.';
+  if (e.status === 429) return 'Troppi tentativi: riprova tra qualche minuto.';
+  return 'Accesso non riuscito. Controlla la connessione e riprova.';
 }
 
 export function Login() {
-  const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const field = useRef<HTMLInputElement>(null);
+  const emailField = useRef<HTMLInputElement>(null);
+  const passwordField = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    field.current?.focus();
-  }, [step]);
+    emailField.current?.focus();
+  }, []);
 
-  const fail = (msg: string) => {
+  const fail = (msg: string, field: HTMLInputElement | null) => {
     setError(msg);
     SFX.loss();
-    nudge(field.current);
+    nudge(field);
   };
 
-  const send = async () => {
+  const submit = async () => {
     const e = email.trim().toLowerCase();
     if (!EMAIL.test(e)) {
-      fail('Scrivi un indirizzo email valido.');
+      fail('Scrivi un indirizzo email valido.', emailField.current);
+      return;
+    }
+    if (!password) {
+      fail('Scrivi la password.', passwordField.current);
       return;
     }
     setBusy(true);
     setError('');
-    const { error: err } = await sb().auth.signInWithOtp({
-      email: e,
-      options: { shouldCreateUser: true },
-    });
+    const { error: err } = await sb().auth.signInWithPassword({ email: e, password });
     setBusy(false);
     if (err) {
-      fail(sendError(err));
-      return;
-    }
-    SFX.commit();
-    setEmail(e);
-    setCode('');
-    setStep('code');
-  };
-
-  const verify = async (token: string) => {
-    if (token.length !== 6 || busy) return;
-    setBusy(true);
-    setError('');
-    const { error: err } = await sb().auth.verifyOtp({ email, token, type: 'email' });
-    setBusy(false);
-    if (err) {
-      setCode('');
-      fail('Codice non valido o scaduto.');
+      fail(loginError(err), passwordField.current);
       return;
     }
     SFX.day();
@@ -83,76 +67,44 @@ export function Login() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          void (step === 'email' ? send() : verify(code));
+          void submit();
         }}
       >
         <Emblem rank={0} className="login-emb" />
         <h1>Colibrì</h1>
-
-        {step === 'email' ? (
-          <>
-            <p className="rules">Entra con la tua email: ti mando un codice a 6 cifre.</p>
-            <input
-              ref={field}
-              className="field"
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              enterKeyHint="send"
-              placeholder="la-tua@email.it"
-              aria-label="Email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-              }}
-            />
-            <button type="submit" className="btn" disabled={busy}>
-              {busy ? 'Invio…' : 'Invia codice'}
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="rules">
-              Ho mandato un codice a <b>{email}</b>. Scrivilo qui sotto.
-            </p>
-            <input
-              ref={field}
-              className="field code num"
-              type="text"
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              placeholder="······"
-              aria-label="Codice a 6 cifre"
-              value={code}
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setCode(v);
-                if (v.length === 6) void verify(v);
-              }}
-            />
-            <button type="submit" className="btn" disabled={busy || code.length !== 6}>
-              {busy ? 'Verifica…' : 'Entra'}
-            </button>
-            <div className="login-alt">
-              <button
-                type="button"
-                className="mini"
-                onClick={() => {
-                  setStep('email');
-                  setError('');
-                }}
-              >
-                CAMBIA EMAIL
-              </button>
-              <button type="button" className="mini" disabled={busy} onClick={() => void send()}>
-                RIMANDA IL CODICE
-              </button>
-            </div>
-          </>
-        )}
-
+        <p className="rules">Entra con la tua email e la tua password.</p>
+        <input
+          ref={emailField}
+          className="field"
+          type="email"
+          name="email"
+          autoComplete="username"
+          inputMode="email"
+          enterKeyHint="next"
+          placeholder="la-tua@email.it"
+          aria-label="Email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
+        />
+        <input
+          ref={passwordField}
+          className="field"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          enterKeyHint="go"
+          placeholder="Password"
+          aria-label="Password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+          }}
+        />
+        <button type="submit" className="btn" disabled={busy}>
+          {busy ? 'Accesso…' : 'Entra'}
+        </button>
         <p className="login-err" role="alert">
           {error}
         </p>
