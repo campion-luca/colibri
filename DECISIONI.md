@@ -40,6 +40,31 @@ Tempi, curve di easing e frequenze sono copiati dalla bozza. Cambiano solo quest
 - **Discesa di rank al rollover:** per ora l'overlay compare subito; in F5 arriverà dopo il report del mattino, come nella bozza.
 - **Banner di notifica interno all'app:** spostato in F6 insieme alle notifiche.
 
+## F4 · Supabase
+
+- **Progetto ospitato** in EU (Francoforte), niente Docker: migrazioni in `supabase/migrations`, pubblicate con `npm run db:push` (Supabase CLI collegata con `supabase link`).
+- **Login con codice OTP a 6 cifre** via email (`signInWithOtp` + `verifyOtp` con `type: 'email'`), non con il link magico: su iPhone il link si aprirebbe in Safari e non nella PWA installata. Template "Magic Link" e "Confirm signup" con `{{ .Token }}`. Sessione salvata e rinnovata da sola (`persistSession`, `autoRefreshToken`, chiave `colibri-auth`).
+- **Chiavi nuove di Supabase:** `VITE_SUPABASE_PUBLISHABLE_KEY` (al posto di `VITE_SUPABASE_ANON_KEY`, dismessa entro fine 2026). La `SUPABASE_SECRET_KEY` serve solo ai test RLS e sta solo in `.env.local`.
+- **Modalità locale:** senza variabili Supabase l'app funziona come in F2/F3, solo in locale (sviluppo e prove automatiche). I pulsanti di sviluppo (dati di esempio, azzera) esistono solo lì e non toccano mai i dati veri.
+- **Schema** come nella sezione 7 del prompt, con queste differenze:
+  - `events.id` è un UUID generato dal client (primary key), non un `bigint` identity;
+  - `ideas` ha anche `updated_at`; `items` e `ideas` hanno trigger su `updated_at`;
+  - le pause si cancellano davvero (non soft delete), come nella bozza;
+  - `push_subscriptions` e `notif_sent` sono già create (servono in F6).
+- **XP solo dalle RPC:** il client legge ma non scrive `events`, `day_history`, `profiles.xp` e `profiles.last_date` (permessi di colonna). Si cambiano solo da `apply_xp` e `commit_rollover` (`security definer`, filtrate su `auth.uid()`). Dal profilo il client può cambiare solo `notif` e `timezone`.
+- **`apply_xp(evs jsonb)`:** riceve un array di eventi; il delta è lo `xp` di ciascun evento (invece di `apply_xp(delta, ev)`), così una scrittura con più eventi (es. più fasce chiuse) è una sola transazione. Un id già visto non fa niente.
+- **`commit_rollover(p_from, p_today, p_events, p_items, p_history)`:** blocca la riga del profilo e applica solo se `last_date` è ancora `p_from`, è prima di `p_today` e `p_today` non è nel futuro nell'ora locale del profilo. Altrimenti restituisce lo stato attuale e il client ricarica.
+- **Aggiornamenti ottimistici e coda:** ogni modifica locale diventa un pacchetto in coda (`localStorage`, chiave `colibri-queue`) e la UI non aspetta mai la rete. La coda si invia subito, al ritorno della connessione, al ritorno sull'app e ogni 30 secondi.
+  - Errori di rete, 5xx, 401, 408 e 429: si riprova più tardi.
+  - Altri errori: il pacchetto si scarta dopo 5 tentativi, con un avviso.
+  - Indicatore "non sincronizzato" nell'header finché la coda non è vuota.
+- **Ricaricamento** su `visibilitychange`, `focus` e `online`: stato fresco dal server con sopra i pacchetti ancora in coda. Sugli elementi vince l'ultima scrittura (riga intera); gli XP li decide il server, e si prendono i suoi quando la coda è vuota.
+- **Mezzanotte:** passa solo da `commit_rollover`, a coda vuota e su stato appena ricaricato. **Offline il rollover aspetta la rete:** penalità e pulizia arrivano appena torna la connessione.
+- **Eventi in locale:** solo gli ultimi 7 giorni (più il giorno di `last_date`); il calendario completo li caricherà per mese in F5.
+- **Dati locali di prova:** al primo login si scartano e si parte da zero (cambia l'utente del salvataggio locale).
+- **Suoni e Vibrazione** restano impostazioni del dispositivo, non del profilo.
+- **Pulizia dei soft delete dopo 30 giorni:** il job con `pg_cron` arriva in F6, insieme agli altri job programmati.
+
 ## Stato e sincronizzazione
 
 - Solo **Zustand** (niente TanStack Query).

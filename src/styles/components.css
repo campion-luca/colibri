@@ -956,3 +956,108 @@
 .view {
   animation: vin 0.3s var(--ease);
 }
+
+/* ---------- accesso ---------- */
+@layer components {
+  .login {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+  .login-c {
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+  .login-c .emb-wrap.login-emb {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 6px;
+  }
+  .login-c h1 {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .login-c .field.code {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 28px;
+    letter-spacing: 0.4em;
+  }
+  .login-c .btn:disabled {
+    opacity: 0.6;
+  }
+  .login-alt {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .login-err {
+    min-height: 1.2em;
+    font-size: 13px;
+    color: var(--red);
+  }
+
+  /* ---------- sincronizzazione ---------- */
+  .sync-off {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .sync-off::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--amber);
+  }
+
+  /* ---------- skeleton ---------- */
+  .row.skel {
+    pointer-events: none;
+  }
+  .skel-box {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    background: var(--s2);
+  }
+  .skel-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .skel-lines i {
+    display: block;
+    height: 12px;
+    width: 70%;
+    background: var(--s2);
+  }
+  .skel-lines i + i {
+    width: 40%;
+    height: 9px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .row.skel {
+      animation: skel 1.4s ease-in-out infinite;
+    }
+  }
+}
+@keyframes skel {
+  50% {
+    opacity: 0.45;
+  }
+}

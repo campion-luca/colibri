@@ -69,14 +69,27 @@ export interface ToggleDone {
 }
 export type ToggleOutcome = { ok: false; reason: string } | ToggleDone;
 
-export interface TickResult {
-  rollover: RolloverResult | null;
-  windowEvents: XpEvent[];
+/** Stato del server (con le modifiche ancora in coda già riapplicate). */
+export interface RemoteState {
+  xp: number;
+  lastDate: Day | null;
+  items: Item[];
+  ideas: Idea[];
+  pauses: Pause[];
+  events: XpEvent[];
+  history: Record<Day, DayHistory>;
+  notif: NotifSettings;
 }
 
 interface GameActions {
-  /** mezzanotte e chiusura delle fasce: all'apertura e ogni 30 s */
-  tick: (now: Now) => TickResult;
+  /** chiusura delle fasce: all'apertura e ogni 30 s */
+  closeWindows: (now: Now) => XpEvent[];
+  /** mezzanotte calcolata e applicata in locale (solo modalità senza Supabase) */
+  localRollover: (now: Now) => RolloverResult | null;
+  /** mezzanotte già confermata: XP dal server (o calcolati in locale) */
+  applyRollover: (r: RolloverResult | null, xp: number, today: Day) => void;
+  /** sostituisce lo stato con quello del server */
+  applyRemote: (remote: RemoteState) => void;
   toggle: (id: string, now: Now) => ToggleOutcome | null;
   removeOneRep: (id: string, now: Now) => void;
   togglePromise: (id: string, when: 0 | 1, now: Now) => { promised: boolean; item: Item } | null;
@@ -96,9 +109,17 @@ interface GameActions {
 
 const LOCAL_USER = 'local';
 
-/** Vero durante `replaceAll` (dati di esempio / azzeramento): niente overlay di rank. */
+/** Vero durante `replaceAll` e i ricaricamenti dal server: niente overlay di rank. */
 let quiet = false;
 export const isQuietUpdate = (): boolean => quiet;
+function quietly(fn: () => void): void {
+  quiet = true;
+  try {
+    fn();
+  } finally {
+    quiet = false;
+  }
+}
 const EVENTS_KEEP_DAYS = 120;
 const TRASH_KEEP_MS = 30 * 86_400_000;
 
@@ -136,37 +157,47 @@ export const useGame = create<GameData & GameActions>()(
     (set, get) => ({
       ...emptyData(),
 
-      tick(now) {
-        const out: TickResult = { rollover: null, windowEvents: [] };
+      closeWindows(now) {
         const s = get();
-        if (s.lastDate === null) {
-          set({ lastDate: now.day });
-        } else if (s.lastDate < now.day) {
-          const r = rollover(s, now.day, ctxOf(s), now.ts);
-          if (r) {
-            const history = { ...s.history };
-            for (const h of r.history) history[h.day] = h;
-            const keepFrom = addDays(now.day, -EVENTS_KEEP_DAYS);
-            const ev = withEvents(s, r.events);
-            set({
-              xp: ev.xp,
-              events: ev.events.filter((e) => e.day >= keepFrom),
-              lastDate: now.day,
-              items: r.items,
-              history,
-              lastReport: r.report,
-              trash: s.trash.filter((t) => now.ts - t.deletedAt < TRASH_KEEP_MS),
-            });
-            out.rollover = r;
-          }
+        const w = checkWindows(s.items, s.pauses, now, ctxOf(s));
+        if (w.events.length) set({ items: replace(s.items, w.items), ...withEvents(s, w.events) });
+        return w.events;
+      },
+
+      localRollover(now) {
+        const s = get();
+        if (s.lastDate !== null && s.lastDate >= now.day) return null;
+        const r = s.lastDate ? rollover(s, now.day, ctxOf(s), now.ts) : null;
+        get().applyRollover(r, r ? applyEvents(s.xp, r.events) : s.xp, now.day);
+        return r;
+      },
+
+      applyRollover(r, xp, today) {
+        const s = get();
+        if (!r) {
+          set({ lastDate: today, xp });
+          return;
         }
-        const cur = get();
-        const w = checkWindows(cur.items, cur.pauses, now, ctxOf(cur));
-        if (w.events.length) {
-          set({ items: replace(cur.items, w.items), ...withEvents(cur, w.events) });
-          out.windowEvents = w.events;
-        }
-        return out;
+        const history = { ...s.history };
+        for (const h of r.history) history[h.day] = h;
+        const keepFrom = addDays(today, -EVENTS_KEEP_DAYS);
+        const seen = new Set(s.events.map((e) => e.id));
+        const events = [...s.events, ...r.events.filter((e) => !seen.has(e.id))];
+        set({
+          xp,
+          events: events.filter((e) => e.day >= keepFrom),
+          lastDate: today,
+          items: r.items,
+          history,
+          lastReport: { ...r.report, rankAfter: rankIndex(xp) },
+          trash: s.trash.filter((t) => Date.now() - t.deletedAt < TRASH_KEEP_MS),
+        });
+      },
+
+      applyRemote(remote) {
+        quietly(() => {
+          set((s) => ({ ...remote, history: { ...s.history, ...remote.history } }));
+        });
       },
 
       toggle(id, now) {
@@ -336,9 +367,9 @@ export const useGame = create<GameData & GameActions>()(
       },
 
       replaceAll(data) {
-        quiet = true;
-        set({ ...emptyData(), ...data });
-        quiet = false;
+        quietly(() => {
+          set({ ...emptyData(), ...data });
+        });
       },
     }),
     {

@@ -11,6 +11,7 @@ import {
   type Effort,
 } from '../domain/index.ts';
 import { SFX } from '../audio/engine.ts';
+import { SYNC_ENABLED } from '../data/client.ts';
 import { seedData } from '../dev/seed.ts';
 import { haptic } from '../fx/haptics.ts';
 import { getNow } from '../lib/now.ts';
@@ -108,7 +109,8 @@ export function SettingsSheet() {
         Sotto soglia perdi il rank.
       </p>
 
-      {import.meta.env.DEV && <DevTools />}
+      {/* solo in sviluppo e senza Supabase: non tocca mai i dati veri */}
+      {import.meta.env.DEV && !SYNC_ENABLED && <DevTools />}
     </>
   );
 }

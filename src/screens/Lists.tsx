@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { SFX } from '../audio/engine.ts';
 import { Grip } from '../components/Row.tsx';
 import { RowGroup } from '../components/RowGroup.tsx';
+import { SkeletonRows } from '../components/Skeleton.tsx';
+import { useReady } from '../lib/ready.ts';
 import { ddmm, listItems, sortedIdeas, type Idea } from '../domain/index.ts';
 import { haptic } from '../fx/haptics.ts';
 import { flip } from '../fx/order.ts';
@@ -69,11 +71,14 @@ function Segmented({ value }: { value: ListSeg }) {
 
 function ItemList({ kind }: { kind: Exclude<ListSeg, 'idea'> }) {
   const now = useNow();
+  const ready = useReady();
   const items = useGame((s) => s.items);
   const list = listItems(items, kind, now.day);
   return (
     <div className="sec view" key={kind}>
-      {list.length ? (
+      {!ready ? (
+        <SkeletonRows />
+      ) : list.length ? (
         <RowGroup items={list} k="l" now={now} commitBtn={kind !== 'hold'} />
       ) : (
         <div className="empty">

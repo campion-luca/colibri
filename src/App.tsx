@@ -19,6 +19,8 @@ import {
   windowToast,
   type XpEvent,
 } from './domain/index.ts';
+import { SYNC_ENABLED } from './data/client.ts';
+import { flush, syncNow, useSync } from './data/sync.ts';
 import { haptic } from './fx/haptics.ts';
 import { flip } from './fx/order.ts';
 import { NowContext, getNow, useNow } from './lib/now.ts';
@@ -36,19 +38,24 @@ export function App() {
 
   // l'orologio dell'interfaccia: ogni 30 s e quando si torna sull'app
   useEffect(() => {
-    const refresh = () => {
+    const tick = () => {
       setNow(getNow());
     };
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') refresh();
+    // tornando sull'app: orologio aggiornato e dati ricaricati dal server
+    const back = () => {
+      tick();
+      if (SYNC_ENABLED) void syncNow();
     };
-    const id = window.setInterval(refresh, TICK_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') back();
+    };
+    const id = window.setInterval(tick, TICK_MS);
     document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', refresh);
+    window.addEventListener('focus', back);
     return () => {
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', refresh);
+      window.removeEventListener('focus', back);
     };
   }, []);
 
@@ -56,9 +63,17 @@ export function App() {
   useEffect(() => {
     const id = window.setTimeout(() => {
       let closed: XpEvent[] = [];
+      const g = useGame.getState();
       flip(() => {
-        closed = useGame.getState().tick(now).windowEvents;
+        // con Supabase la mezzanotte passa da commit_rollover (data/sync)
+        if (!SYNC_ENABLED) g.localRollover(now);
+        closed = g.closeWindows(now);
       });
+      if (SYNC_ENABLED) {
+        const s = useGame.getState();
+        if (s.lastDate === null || s.lastDate < now.day) void syncNow();
+        else if (useSync.getState().queue.length) void flush();
+      }
       if (closed.length) {
         SFX.loss();
         haptic(60);
@@ -129,9 +144,11 @@ function HeaderContainer() {
   const xp = useGame((s) => s.xp);
   const items = useGame((s) => s.items);
   const pauses = useGame((s) => s.pauses);
+  const unsynced = useSync((s) => s.queue.length > 0);
   const pz = pauseOn(pauses, now.day);
   return (
     <Header
+      unsynced={SYNC_ENABLED && unsynced}
       progress={rankProgress(xp)}
       xp={xp}
       strike={strikeCount(items, now.day)}

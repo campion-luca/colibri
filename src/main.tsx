@@ -8,13 +8,13 @@ import './index.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App.tsx';
+import { Root } from './Root.tsx';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root non trovato');
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <Root />
   </StrictMode>,
 );

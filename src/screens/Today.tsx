@@ -1,6 +1,8 @@
 import { SFX } from '../audio/engine.ts';
 import { Fire } from '../components/Fire.tsx';
 import { RowGroup } from '../components/RowGroup.tsx';
+import { SkeletonRows } from '../components/Skeleton.tsx';
+import { useReady } from '../lib/ready.ts';
 import {
   STRIKE_FROM,
   fmtDay,
@@ -20,6 +22,7 @@ import { useUi } from '../store/ui.ts';
 
 export function Today() {
   const now = useNow();
+  const ready = useReady();
   const items = useGame((s) => s.items);
   const pauses = useGame((s) => s.pauses);
   const showOff = useUi((s) => s.showOff);
@@ -66,7 +69,9 @@ export function Today() {
             {dd}/{dailies.length}
           </span>
         </div>
-        {dailies.length ? (
+        {!ready ? (
+          <SkeletonRows />
+        ) : dailies.length ? (
           <RowGroup items={dailies} k="d" now={now} />
         ) : (
           <div className="empty">Niente di ricorrente oggi.</div>
@@ -91,7 +96,9 @@ export function Today() {
             {pd}/{prom.length}
           </span>
         </div>
-        {prom.length ? (
+        {!ready ? (
+          <SkeletonRows n={2} />
+        ) : prom.length ? (
           <RowGroup items={prom} k="p" now={now} showPromise showKind />
         ) : (
           <div className="empty">

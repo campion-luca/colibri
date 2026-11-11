@@ -9,6 +9,8 @@ export interface HeaderProps {
   progress: RankProgress;
   xp: number;
   strike: number;
+  /** ci sono modifiche in coda non ancora salvate sul server */
+  unsynced: boolean;
   /** es. "3h 12m" */
   midnightIn: string;
   /** XP a rischio a mezzanotte (0 = tutto al sicuro) */
@@ -55,6 +57,7 @@ export function Header({
   progress,
   xp,
   strike,
+  unsynced,
   midnightIn,
   risk,
   paused,
@@ -129,6 +132,11 @@ export function Header({
           </span>
         )}
         {strike >= STRIKE_FROM && <Fire n={strike} size="top" />}
+        {unsynced && (
+          <span className="sync-off" role="status">
+            non sincronizzato
+          </span>
+        )}
       </button>
     </header>
   );

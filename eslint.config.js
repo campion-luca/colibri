@@ -7,7 +7,14 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'dev-dist', 'coverage', 'colibri-bozza.html']),
+  // database.types.ts è generato da `supabase gen types` (npm run db:types)
+  globalIgnores([
+    'dist',
+    'dev-dist',
+    'coverage',
+    'colibri-bozza.html',
+    'src/data/database.types.ts',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
