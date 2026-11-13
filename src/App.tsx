@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { SFX, unlockAudio } from './audio/engine.ts';
-import { AppSheet } from './components/AppSheet.tsx';
 import { FxDefs } from './components/Fire.tsx';
 import { Header } from './components/Header.tsx';
 import { Nav } from './components/Nav.tsx';
@@ -31,6 +30,26 @@ import { isQuietUpdate, useGame } from './store/game.ts';
 import { toast, useUi } from './store/ui.ts';
 
 const TICK_MS = 30_000;
+
+/* Il pannello (vaul + radix) non serve all'avvio: si carica a parte, appena l'app è inattiva. */
+const loadSheet = () => import('./components/AppSheet.tsx');
+const AppSheet = lazy(() => loadSheet().then((m) => ({ default: m.AppSheet })));
+
+function LazySheet() {
+  const used = useUi((s) => s.sheet !== null);
+  useEffect(() => {
+    const prefetch = () => void loadSheet();
+    // Safari iOS non ha sempre requestIdleCallback
+    if ('requestIdleCallback' in window) window.requestIdleCallback(prefetch);
+    else setTimeout(prefetch, 1200);
+  }, []);
+  if (!used) return null;
+  return (
+    <Suspense fallback={null}>
+      <AppSheet />
+    </Suspense>
+  );
+}
 const PRESSABLE = 'button, [role="button"], .ttl, .tgl';
 
 export function App() {
@@ -132,7 +151,7 @@ export function App() {
         <Screen />
       </div>
       <NavContainer />
-      <AppSheet />
+      <LazySheet />
       <Overlay />
       <Toasts />
     </NowContext>

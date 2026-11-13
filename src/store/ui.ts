@@ -8,7 +8,8 @@ export type Sheet =
   | { type: 'add'; draft: Draft }
   | { type: 'edit'; id: string }
   | { type: 'editIdea'; id: string }
-  | { type: 'settings' };
+  | { type: 'settings' }
+  | { type: 'pick' };
 
 export type Overlay =
   | { id: number; type: 'rank'; rank: number; up: boolean }

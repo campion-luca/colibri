@@ -353,6 +353,27 @@ describe('6 notifiche', () => {
     });
   });
 
+  it('scadenza con orario: promemoria nell’ultima ora, il malus resta a mezzanotte', () => {
+    const t = item({ title: 'Bollo', effort: 2, due: TUE, dueTime: '18:00' });
+    const h = item({ title: 'Pacco', kind: 'hold', due: TUE, dueTime: '18:00' });
+    const keys = (hhmm: string) =>
+      pendingNotifications({ ...base, items: [t, h], now: at(TUE, hhmm) })
+        .filter((n) => n.key.startsWith('due-'))
+        .map((n) => [n.title, n.body]);
+    expect(keys('16:59')).toEqual([]);
+    expect(keys('17:00')).toEqual([
+      ['Scade alle 18:00: Bollo', 'Se salta: −10 XP a mezzanotte'],
+      ['Scade alle 18:00: Pacco (in sospeso)', ''],
+    ]);
+    expect(keys('18:01')).toEqual([]);
+    const done = { ...t, done: true, doneOn: TUE };
+    expect(
+      pendingNotifications({ ...base, items: [done], now: at(TUE, '17:30') }).filter((n) =>
+        n.key.startsWith('due-'),
+      ),
+    ).toEqual([]);
+  });
+
   it('report serale all’ora scelta', () => {
     const now = at(TUE, '21:30');
     expect(pendingNotifications({ ...base, now, gainedToday: 40 })).toEqual([
@@ -391,13 +412,30 @@ describe('testi', () => {
   });
 
   it('scadenze', () => {
-    expect(dueLabel(item({ due: '2026-11-07' }), TUE)).toEqual({
+    const now = at(TUE);
+    expect(dueLabel(item({ due: '2026-11-07' }), now)).toEqual({
       text: 'scaduta da 3g',
       urgent: true,
     });
-    expect(dueLabel(item({ due: TUE }), TUE)).toEqual({ text: 'scade oggi', urgent: true });
-    expect(dueLabel(item({ due: FRI }), TUE)).toEqual({ text: 'scade ven', urgent: false });
-    expect(dueLabel(item(), TUE)).toBeNull();
+    expect(dueLabel(item({ due: TUE }), now)).toEqual({ text: 'scade oggi', urgent: true });
+    expect(dueLabel(item({ due: FRI }), now)).toEqual({ text: 'scade ven', urgent: false });
+    expect(dueLabel(item(), now)).toBeNull();
+  });
+
+  it('scadenze con orario: rosso nell’ultima ora, poi "scaduta alle"', () => {
+    const t = item({ due: TUE, dueTime: '18:00' });
+    expect(dueLabel(t, at(TUE, '12:00'))).toEqual({ text: 'scade alle 18:00', urgent: false });
+    expect(dueLabel(t, at(TUE, '17:00'))).toEqual({ text: 'scade tra 60m', urgent: true });
+    expect(dueLabel(t, at(TUE, '17:25'))).toEqual({ text: 'scade tra 35m', urgent: true });
+    expect(dueLabel(t, at(TUE, '18:00'))).toEqual({ text: 'scaduta alle 18:00', urgent: true });
+    expect(dueLabel(item({ due: FRI, dueTime: '09:30' }), at(TUE))).toEqual({
+      text: 'scade ven 09:30',
+      urgent: false,
+    });
+    expect(dueLabel(item({ due: WED, dueTime: '08:00' }), at(TUE))).toEqual({
+      text: 'scade domani 08:00',
+      urgent: false,
+    });
   });
 
   it('report e toast', () => {

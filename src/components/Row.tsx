@@ -90,8 +90,9 @@ function RowView({ item: it, k, now, onReorder, ...opts }: RowProps) {
     const nd = nextDate(it, today);
     meta.push(nd ? `prossima: ${fmtDay(today, nd)}` : '—');
   }
-  if (!daily && !done && !(opts.showPromise && isDueToday(it, today))) {
-    const d = dueLabel(it, today);
+  // in "Promesse e scadenze" la scadenza di oggi è già nel tag, tranne l'orario
+  if (!daily && !done && !(opts.showPromise && isDueToday(it, today) && !it.dueTime)) {
+    const d = dueLabel(it, now);
     if (d) meta.push(d.urgent ? <span className="urg">{d.text}</span> : d.text);
   }
   if (daily) {

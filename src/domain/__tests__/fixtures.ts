@@ -42,6 +42,7 @@ export function item(p: Partial<Item> = {}): Item {
     gain: null,
     promiseDate: null,
     due: null,
+    dueTime: null,
     duePenalized: null,
     doneOn: null,
     ...p,

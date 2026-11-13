@@ -80,12 +80,25 @@ export interface Label {
 }
 
 /** Metadato della scadenza per le righe: "scaduta da 3g", "scade oggi", "scade ven". */
-export function dueLabel(it: Item, today: Day): Label | null {
+/**
+ * Metadato della scadenza per le righe: "scaduta da 3g", "scade oggi", "scade ven".
+ * Con l'orario: "scade alle 18:00", rosso nell'ultima ora ("scade tra 35m"),
+ * "scaduta alle 18:00" quando l'ora è passata (il malus resta a mezzanotte).
+ */
+export function dueLabel(it: Item, now: Pick<Now, 'day' | 'minute'>): Label | null {
+  const today = now.day;
   const n = dueIn(it, today);
   if (n === null || !it.due) return null;
   if (n < 0) return { text: `scaduta da ${-n}g`, urgent: true };
-  if (n === 0) return { text: 'scade oggi', urgent: true };
-  return { text: `scade ${fmtDay(today, it.due)}`, urgent: false };
+  const t = it.dueTime;
+  if (n === 0) {
+    if (!t) return { text: 'scade oggi', urgent: true };
+    const left = toMin(t) - now.minute;
+    if (left <= 0) return { text: `scaduta alle ${t}`, urgent: true };
+    if (left <= URGENT_MIN) return { text: `scade tra ${left}m`, urgent: true };
+    return { text: `scade alle ${t}`, urgent: false };
+  }
+  return { text: `scade ${fmtDay(today, it.due)}${t ? ` ${t}` : ''}`, urgent: false };
 }
 
 /** Metadato della fascia oraria di una ricorrente. */

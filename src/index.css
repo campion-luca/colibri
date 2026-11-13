@@ -91,6 +91,9 @@
     font-family: var(--font-sans);
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+    /* niente zoom col doppio tocco (chip e stepper toccati in fretta); pinch-zoom resta */
+    touch-action: manipulation;
+    overflow-x: clip;
   }
   body {
     user-select: none;

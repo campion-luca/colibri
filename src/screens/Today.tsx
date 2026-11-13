@@ -102,10 +102,19 @@ export function Today() {
           <RowGroup items={prom} k="p" now={now} showPromise showKind />
         ) : (
           <div className="empty">
-            Niente promesse. Dalle Liste premi OGGI (o DOM la sera prima). Le cose in scadenza oggi
-            compaiono qui da sole.
+            Niente promesse. Scegli qui sotto cosa fare oggi (o premi DOM nelle Liste la sera
+            prima). Le cose in scadenza oggi compaiono qui da sole.
           </div>
         )}
+        <button
+          type="button"
+          className="pick-btn"
+          onClick={() => {
+            useUi.getState().openSheet({ type: 'pick' });
+          }}
+        >
+          + SCEGLI LE TASK DI OGGI
+        </button>
         <button type="button" className="off-tgl" onClick={toggleTom} aria-expanded={showTom}>
           {showTom ? '▾' : '▸'} Promesse per domani · {tom.length}
         </button>

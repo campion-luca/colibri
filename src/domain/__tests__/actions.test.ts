@@ -233,6 +233,28 @@ describe('4 pannello Modifica', () => {
     expect(r?.type === 'item' && r.item).toMatchObject({ times: 1, doneCount: 1 });
   });
 
+  it('orario della scadenza: solo con una data, e cambiarlo non riarma la scadenza', () => {
+    const r = created(draft({ due: '2026-11-20', dueTime: '18:00' }));
+    expect(r.item).toMatchObject({ due: '2026-11-20', dueTime: '18:00' });
+    expect(created(draft({ due: null, dueTime: '18:00' })).item.dueTime).toBeNull();
+    expect(created(draft({ kind: 'daily', due: TUE, dueTime: '18:00' })).item.dueTime).toBeNull();
+
+    const t = item({ due: MON, dueTime: '09:00', duePenalized: MON });
+    const onlyTime = editFromDraft(
+      t,
+      { ...draftFromItem(t, TUE), dueTime: '10:00' },
+      now,
+      makeCtx(),
+      0,
+    );
+    expect(onlyTime?.type === 'item' && onlyTime.item).toMatchObject({
+      dueTime: '10:00',
+      duePenalized: MON,
+    });
+    const noDue = editFromDraft(t, { ...draftFromItem(t, TUE), due: null }, now, makeCtx(), 0);
+    expect(noDue?.type === 'item' && noDue.item).toMatchObject({ due: null, dueTime: null });
+  });
+
   it('cambiare la scadenza la riarma', () => {
     const t = item({ due: MON, duePenalized: MON });
     const r = editFromDraft(t, { ...draftFromItem(t, TUE), due: '2026-11-20' }, now, makeCtx(), 0);

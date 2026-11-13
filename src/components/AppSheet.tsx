@@ -2,6 +2,7 @@ import { Drawer } from 'vaul';
 import { useBackToClose } from '../lib/overlay.ts';
 import { useUi } from '../store/ui.ts';
 import { ItemSheet } from './ItemSheet.tsx';
+import { PickSheet } from './PickSheet.tsx';
 import { SettingsSheet } from './SettingsSheet.tsx';
 
 const TITLES = {
@@ -9,6 +10,7 @@ const TITLES = {
   edit: 'Modifica',
   editIdea: 'Modifica idea',
   settings: 'Impostazioni',
+  pick: 'Scegli le task di oggi',
 } as const;
 
 /** Bottom sheet unico (vaul): swipe in basso o gesto indietro per chiudere. */
@@ -35,6 +37,8 @@ export function AppSheet() {
             {sheet &&
               (sheet.type === 'settings' ? (
                 <SettingsSheet key={sheetKey} />
+              ) : sheet.type === 'pick' ? (
+                <PickSheet key={sheetKey} />
               ) : (
                 <ItemSheet key={sheetKey} sheet={sheet} />
               ))}

@@ -130,6 +130,8 @@ export interface Draft {
   /** promessa: null = nessuna, 0 = oggi, 1 = domani */
   promise: 0 | 1 | null;
   due: Day | null;
+  /** orario della scadenza, solo se c'è una data */
+  dueTime: HHMM | null;
   times: Times;
   allDay: boolean;
   from: HHMM;
@@ -145,6 +147,7 @@ export function newDraft(kind: Kind | 'idea', promise: 0 | 1 | null = null): Dra
     note: '',
     promise,
     due: null,
+    dueTime: null,
     times: 1,
     allDay: true,
     from: '08:00',
@@ -162,6 +165,7 @@ export function draftFromItem(it: Item, today: Day): Draft {
     note: it.note ?? '',
     promise: it.promiseDate === today ? 0 : it.promiseDate === addDays(today, 1) ? 1 : null,
     due: it.due,
+    dueTime: it.dueTime,
     times: it.times,
     allDay: !it.window,
     from: it.window?.from ?? '08:00',
@@ -268,6 +272,7 @@ function buildItem(
     gain: null,
     promiseDate: promiseFor(kind, d.promise, now.day),
     due: kind === 'daily' ? null : d.due,
+    dueTime: kind === 'daily' || !d.due ? null : d.dueTime,
     duePenalized: null,
     doneOn: null,
   };
@@ -319,10 +324,12 @@ export function editFromDraft(
   }
   next.promiseDate = promiseFor(kind, d.promise, today);
   if (kind === 'daily') {
-    next = applyDaily({ ...next, due: null, duePenalized: null }, d, now);
+    next = applyDaily({ ...next, due: null, dueTime: null, duePenalized: null }, d, now);
   } else {
+    // cambiare solo l'orario non riarma la scadenza; cambiare il giorno sì
     if (it.due !== d.due) next.duePenalized = null;
     next.due = d.due;
+    next.dueTime = d.due ? d.dueTime : null;
   }
   return { type: 'item', item: next, event: makeEvent(ctx, now, 'edited', next) };
 }

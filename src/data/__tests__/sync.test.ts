@@ -34,6 +34,7 @@ const asItemRow = (r: ReturnType<typeof itemToRow>): Tables<'items'> => ({
   // il database restituisce gli orari con i secondi
   window_from: r.window_from ? `${r.window_from}:00` : null,
   window_to: r.window_to ? `${r.window_to}:00` : null,
+  due_time: r.due_time ? `${r.due_time}:00` : null,
 });
 
 describe('mapping righe ↔ dominio', () => {
@@ -44,6 +45,7 @@ describe('mapping righe ↔ dominio', () => {
       daily({ recur: { type: 'interval', every: 7, start: MON } }),
       daily({ recur: { type: 'monthly', day: 31 } }),
       item({ effort: 3, promiseDate: TUE, due: TUE, duePenalized: MON, note: 'nota' }),
+      item({ due: TUE, dueTime: '18:30' }),
       item({ kind: 'buy', done: true, doneOn: TUE, gain: 5 }),
     ];
     for (const it of items) {

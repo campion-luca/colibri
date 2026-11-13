@@ -66,6 +66,7 @@ export function itemToRow(it: Item): TablesInsert<'items'> {
     gain: it.gain,
     promise_date: it.promiseDate,
     due: it.due,
+    due_time: it.dueTime,
     due_penalized: it.duePenalized,
     // un elemento vivo non è eliminato: così l'upsert fa anche da ripristino
     deleted_at: null,
@@ -92,6 +93,7 @@ export function rowToItem(r: Tables<'items'>): Item {
     gain: r.gain,
     promiseDate: r.promise_date,
     due: r.due,
+    dueTime: hhmm(r.due_time),
     duePenalized: r.due_penalized,
     doneOn: r.done_on,
   };

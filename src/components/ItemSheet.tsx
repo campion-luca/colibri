@@ -422,7 +422,8 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 key={l}
                 on={n === null ? !draft.due : draft.due === addDays(today, n)}
                 onClick={() => {
-                  set({ due: n === null ? null : addDays(today, n) });
+                  // senza scadenza non c'è nemmeno l'orario
+                  set(n === null ? { due: null, dueTime: null } : { due: addDays(today, n) });
                   SFX.commit();
                 }}
               >
@@ -438,11 +439,40 @@ export function ItemSheet({ sheet }: { sheet: FormSheet }) {
                 value={draft.due ?? ''}
                 min={today}
                 onChange={(e) => {
-                  set({ due: e.target.value || null });
+                  const due = e.target.value || null;
+                  set(due ? { due } : { due: null, dueTime: null });
                 }}
               />
             </label>
+            {draft.due && (
+              <label>
+                Ora (facoltativa)
+                <input
+                  type="time"
+                  value={draft.dueTime ?? ''}
+                  onChange={(e) => {
+                    set({ dueTime: e.target.value || null });
+                  }}
+                />
+              </label>
+            )}
           </div>
+          {draft.due && draft.dueTime && (
+            <p className="rules due-hint">
+              Promemoria nell'ultima ora prima delle {draft.dueTime}; se non è fatta, il malus
+              arriva comunque a mezzanotte.{' '}
+              <button
+                type="button"
+                className="mini"
+                onClick={() => {
+                  set({ dueTime: null });
+                  SFX.undo();
+                }}
+              >
+                TOGLI ORARIO
+              </button>
+            </p>
+          )}
         </>
       )}
 

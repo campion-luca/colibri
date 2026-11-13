@@ -65,6 +65,23 @@ Tempi, curve di easing e frequenze sono copiati dalla bozza. Cambiano solo quest
 - **Suoni e Vibrazione** restano impostazioni del dispositivo, non del profilo.
 - **Pulizia dei soft delete dopo 30 giorni:** il job con `pg_cron` arriva in F6, insieme agli altri job programmati.
 
+## Dopo F4 · velocità e modifiche richieste
+
+- **Malus:** confermato com'è, solo sulle task scelte (promesse) e non fatte, più ricorrenti e scadenze mancate. Nessun malus fisso.
+- **Scelta da Oggi:** in "Promesse e scadenze" il pulsante "Scegli le task di oggi" apre un pannello con Task e Da comprare non fatte; un tocco promette per oggi (o toglie la promessa). OGGI/DOM nelle Liste restano.
+- **Orario della scadenza** (`items.due_time`, facoltativo, solo con una data):
+  - è un promemoria: notifica nell'ultima ora (in F6) e riga rossa ("scade tra 35m", poi "scaduta alle 18:00");
+  - il malus resta a mezzanotte;
+  - cambiare solo l'orario non riarma la scadenza, cambiare il giorno sì.
+- **Pannello senza spostamenti orizzontali:** il pannello scorre solo in verticale; campi data/ora e griglie dei chip non possono superare la larghezza dello schermo (Safari iOS). Tolto lo zoom col doppio tocco (`touch-action: manipulation`); lo zoom con due dita resta.
+- **Velocità** (misurata su build di produzione, rete Slow 4G simulata, CPU 4× più lenta):
+  - **avvio immediato:** con una sessione salvata l'app si apre subito con i dati in cache, senza aspettare il rinnovo del token, che dopo un'ora passa dalla rete. Riapertura dopo più di un'ora: da 1220 a 602 ms;
+  - **client Supabase leggero:** `@supabase/auth-js` + `@supabase/postgrest-js` invece di `supabase-js`, che porta anche realtime, storage e functions; stesso formato e chiave della sessione, quindi nessun nuovo login. `supabase-js` resta solo per i test RLS;
+  - **pannello (vaul + radix) caricato a parte**, nei momenti di inattività dopo l'avvio;
+  - JavaScript iniziale da 185 a 134 kB compressi; primo accesso senza cache da 1706 a 1397 ms;
+  - **ricaricando dal server** gli oggetti rimasti uguali restano gli stessi: le righe non si ridisegnano;
+  - **passo successivo:** service worker con cache dei file (F6), così l'app si apre senza aspettare la rete.
+
 ## Stato e sincronizzazione
 
 - Solo **Zustand** (niente TanStack Query).

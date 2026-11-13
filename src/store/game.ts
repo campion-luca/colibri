@@ -139,6 +139,24 @@ export const emptyData = (): GameData => ({
 
 const ctxOf = (s: GameData): Ctx => ({ userId: s.userId, newId: () => crypto.randomUUID() });
 
+const sameJson = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+
+/** Lista nuova dal server, ma con gli oggetti identici a prima riusati (e la lista stessa se non cambia niente). */
+export function reuseSame<T extends { id: string }>(prev: T[], next: T[]): T[] {
+  const byId = new Map(prev.map((x) => [x.id, x]));
+  let changed = prev.length !== next.length;
+  const out = next.map((x, i) => {
+    const old = byId.get(x.id);
+    if (old && sameJson(old, x)) {
+      if (prev[i] !== old) changed = true;
+      return old;
+    }
+    changed = true;
+    return x;
+  });
+  return changed ? out : prev;
+}
+
 function replace<T extends { id: string }>(list: T[], changed: readonly T[]): T[] {
   if (!changed.length) return list;
   const byId = new Map(changed.map((x) => [x.id, x]));
@@ -196,7 +214,16 @@ export const useGame = create<GameData & GameActions>()(
 
       applyRemote(remote) {
         quietly(() => {
-          set((s) => ({ ...remote, history: { ...s.history, ...remote.history } }));
+          set((s) => ({
+            ...remote,
+            // gli oggetti rimasti uguali restano gli stessi: le righe non si ridisegnano
+            items: reuseSame(s.items, remote.items),
+            ideas: reuseSame(s.ideas, remote.ideas),
+            pauses: reuseSame(s.pauses, remote.pauses),
+            events: reuseSame(s.events, remote.events),
+            notif: sameJson(s.notif, remote.notif) ? s.notif : remote.notif,
+            history: { ...s.history, ...remote.history },
+          }));
         });
       },
 

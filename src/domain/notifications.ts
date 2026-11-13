@@ -1,4 +1,4 @@
-import { DUE_NOTIF_AT_MIN, DUE_PENALTY, START_NOTIF_WINDOW_MIN } from './config.ts';
+import { DUE_NOTIF_AT_MIN, DUE_PENALTY, START_NOTIF_WINDOW_MIN, URGENT_MIN } from './config.ts';
 import { toMin } from './date.ts';
 import { dailyState, isDueToday, isPromisedTomorrow, penalizesDue } from './items.ts';
 import { isPaused } from './pause.ts';
@@ -60,6 +60,21 @@ export function pendingNotifications(input: NotifInput): PendingNotif[] {
         key: 'due',
         title: due.length === 1 ? single : `${due.length} cose scadono oggi`,
         body: loss ? `Se salta: −${loss} XP a mezzanotte` : '',
+      });
+    }
+  }
+
+  // scadenze con orario: promemoria nell'ultima ora (il malus resta a mezzanotte)
+  if (N.due) {
+    for (const i of items) {
+      if (!isDueToday(i, t) || !i.dueTime) continue;
+      const left = toMin(i.dueTime) - m;
+      if (left < 0 || left > URGENT_MIN) continue;
+      const hold = i.kind === 'hold';
+      out.push({
+        key: `due-${i.id}`,
+        title: `Scade alle ${i.dueTime}: ${i.title}${hold ? ' (in sospeso)' : ''}`,
+        body: penalizesDue(i) ? `Se salta: −${penaltyOf(i, DUE_PENALTY)} XP a mezzanotte` : '',
       });
     }
   }

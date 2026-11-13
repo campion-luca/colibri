@@ -142,6 +142,7 @@ export type Database = {
           done_count: number
           done_on: string | null
           due: string | null
+          due_time: string | null
           due_penalized: string | null
           effort: number
           gain: number | null
@@ -166,6 +167,7 @@ export type Database = {
           done_count?: number
           done_on?: string | null
           due?: string | null
+          due_time?: string | null
           due_penalized?: string | null
           effort?: number
           gain?: number | null
@@ -190,6 +192,7 @@ export type Database = {
           done_count?: number
           done_on?: string | null
           due?: string | null
+          due_time?: string | null
           due_penalized?: string | null
           effort?: number
           gain?: number | null

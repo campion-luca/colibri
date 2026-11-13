@@ -46,6 +46,8 @@ export interface Item {
   gain: number | null;
   promiseDate: Day | null;
   due: Day | null;
+  /** orario della scadenza (facoltativo): promemoria, il malus resta a mezzanotte */
+  dueTime: HHMM | null;
   duePenalized: Day | null;
   // — comuni
   doneOn: Day | null;

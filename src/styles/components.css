@@ -313,6 +313,74 @@
     text-overflow: ellipsis;
   }
 
+  /* "Scegli le task di oggi" */
+  .pick-btn {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 2px;
+    padding: 12px;
+    border: 1px dashed var(--amber-d);
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    transition: transform 0.15s var(--spring);
+  }
+  .pick-btn:active {
+    transform: scale(0.98);
+  }
+  .sheet .pick-group h3 {
+    margin-top: 16px;
+  }
+  .pick-count {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .pick-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: var(--s1);
+    border: 1px solid var(--line);
+    padding: 12px;
+    margin-bottom: 6px;
+    transition:
+      border-color 0.2s,
+      transform 0.15s var(--spring);
+  }
+  .pick-row:active {
+    transform: scale(0.98);
+  }
+  .pick-row .chk {
+    flex: none;
+  }
+  .pick-row.on {
+    border-color: var(--amber-d);
+  }
+  .pick-row.on .chk {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+  .pick-row.on .chk svg.tick {
+    stroke-dashoffset: 0;
+  }
+  .pick-t {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .pick-t .t {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
   /* OGGI / DOM */
   .prm {
     display: flex;
@@ -561,8 +629,11 @@
     border-bottom: 0;
     padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px);
     max-height: 86vh;
-    overflow: auto;
+    /* solo scorrimento verticale: niente spostamenti a destra e sinistra */
+    overflow-x: hidden;
+    overflow-y: auto;
     overscroll-behavior: contain;
+    touch-action: pan-y;
   }
   .grab {
     width: 40px;
@@ -595,17 +666,20 @@
     font-size: 16px;
     resize: none;
   }
+  /* minmax(0, 1fr): le colonne non si allargano oltre lo schermo per il testo */
   .chips {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
   }
   .chips.k3,
   .chips.k3n {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .chip {
     position: relative;
+    min-width: 0;
+    overflow-wrap: anywhere;
     border: 1.5px solid var(--line);
     padding: 10px 4px;
     text-align: center;
@@ -637,7 +711,7 @@
   }
   .dows {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 5px;
     margin-top: 8px;
   }
@@ -719,14 +793,22 @@
   }
   .times label {
     flex: 1;
+    min-width: 0;
     font-size: 11px;
     color: var(--muted);
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
+  /* Safari iOS: i campi data/ora ignorano width senza appearance:none e sforano */
   .times input {
     display: block;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 48px;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: left;
     margin-top: 4px;
     background: var(--bg);
     border: 1px solid var(--line);
@@ -738,6 +820,16 @@
   }
   .times input:focus {
     border-color: var(--amber);
+  }
+  .times input::-webkit-date-and-time-value {
+    text-align: left;
+  }
+  .due-hint {
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .due-hint .mini {
+    margin-left: 4px;
   }
   .cnt-row {
     display: flex;
